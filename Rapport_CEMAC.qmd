@@ -4,18 +4,45 @@ author: "Tony De Amorim"
 format: html
 ---
 
-# Présentation
+```{r}
+#| label: Library Imports
+#| message: false
+#| warning: false
+
+library(ggplot2)
+library(tidyverse)
+library(knitr)
+library(WDI)
+library(jsonlite)
+```
+
+
+# Préambule
 
 Ce document se veut être un rapport détaillant les différentes économies de la CEMAC, proposant à la fois des informations géographiques élémentaires et les dernières données économiques disponibles. Une brève analyse de ces données est également présentée afin de les remettre en perspective.
 
 L'entièreté des analyses a été réalisée sur R et les différentes bases de données usitées sont mentionnées en sources.
 
-# Présentation des Pays
+# Fiches info géographique et démographique
 
-## 
+::: {.panel-tabset group="Cameroun"}
+## Cameroun
 
 ```{r}
-library(ggplot2)
-library(tidyverse)
+#| label: Fiche pays Cameroun
+#| message: true
+#| warning: false
+
+Fiche_Cameroun <- tibble(
+  Capitale = "Yaoundé",
+  Population = WDI(country = "CM", indicator = "SP.POP.TOTL", latest = 1)$SP.POP.TOTL,
+  Président = "Paul Biya (1982- )"
+)
+
 ```
+
+## Tchad
+
+:::
+
 
