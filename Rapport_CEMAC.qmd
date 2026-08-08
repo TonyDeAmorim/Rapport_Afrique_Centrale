@@ -221,6 +221,18 @@ Fiche_GQ <- Fiche_Pays("GQ", "Ciudad de la Paz", Import_Pop("GQ"), "28,051", Imp
 Fiche_GQ
 ```
 
+## République Démocratique du Congo
+
+```{r}
+#| label: Fiche pays RDC
+#| message: false
+#| warning: false
+#| echo: false
+
+Fiche_COD <- Fiche_Pays("COD", "Kinshasa", Import_Pop("COD"), "2 345 410", Import_Dens("COD"), "Français", "Félix Tshisekedi (2019 - )", "30 juin 1960")
+Fiche_COD
+```
+
 ## Sao Tomé-et-Principe
 
 ```{r}
@@ -259,9 +271,9 @@ Fiche_Tchad
 #| message: false
 #| warning: false
 
-Nom_Pays <- c("Cameroun", "Centrafrique", "Congo", "Gabon", "Guinée Equ.", "São Tomé", "Tchad")
-Liste_Pays <- c("CMR", "CF", "CG", "GA", "GQ", "ST", "TD")
-Liste_Pays_ISO3 <- c("CMR", "CAF", "COG", "GAB", "GNQ", "STP", "TCD")
+Nom_Pays <- c("Cameroun", "Centrafrique", "Congo", "Gabon", "Guinée Equ.", "RDC", "São Tomé", "Tchad")
+Liste_Pays <- c("CMR", "CF", "CG", "GA", "GQ", "COD", "ST", "TD")
+Liste_Pays_ISO3 <- c("CMR", "CAF", "COG", "GAB", "GNQ", "COD", "STP", "TCD")
 
 PIB_PAYS <- map_df(
   Liste_Pays,
@@ -340,15 +352,23 @@ texte_footnote <- df_ECON |>
   }) |>
   paste(collapse = " | ")
 
+ligne_moyenne <- df_ECON |>
+  summarise(
+    Pays = "Moyenne",
+    across(where(is.numeric) & !starts_with("Yr_"), ~ round(mean(.x, na.rm = TRUE), 2)),
+    across(starts_with("Yr_"), ~ NA)
+  )
 
-df_ECON |>
+df_ECON_complet <- bind_rows(df_ECON, ligne_moyenne)
+
+df_ECON_complet |>
   select(-starts_with("Yr_")) |>
   datatable(
     rownames = FALSE,
     extensions = c('Buttons'),
     caption = tags$caption(
       style = 'caption-side: bottom; text-align: left; font-size: 0.85em; color: #555; padding-top: 8px;',
-      paste0("Années des données — ", texte_footnote)
+      paste0("Années des données — ", texte_footnote, " | Source : Banque Mondiale & World Economic Outlook")
     ),
     options = list(
       dom = 'Bfrtip',                  
