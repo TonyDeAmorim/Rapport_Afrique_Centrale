@@ -23,6 +23,7 @@ library(kableExtra)
 library(rsdmx)
 library(DT)
 library(htmltools)
+library(ggthemes)
 ```
 
 ```{r}
@@ -131,6 +132,34 @@ Import_WEO <- function(ISO, REF, EXP, ROUND) {
     mutate(OBS_VALUE = round(as.numeric(OBS_VALUE) / (10^EXP), ROUND))
 }
 ```
+
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+
+Import_WEO_Time_Series <- function(ISO, REF, EXP, ROUND) {
+  ref <- "IMF.RES,WEO"
+  filter <- paste0(ISO, ".", REF)
+  capture.output(dataset <- as.data.frame(suppressMessages(readSDMX(
+    providerId = "IMF_DATA",
+    resource = "data",
+    flowRef = ref,
+    key = filter
+  ))))
+  dataset <-
+    dataset |>
+    mutate(TIME_PERIOD = as.numeric(TIME_PERIOD)) |>
+    filter(TIME_PERIOD <= 2026, !is.na(OBS_VALUE)) |>
+    transmute(
+      Pays_ISO = ISO,
+      annee = TIME_PERIOD,
+      valeur = round(as.numeric(OBS_VALUE) / (10^EXP), ROUND)
+    )
+}
+```
+
 
 ```{r}
 #| message: false
@@ -330,7 +359,7 @@ DEPENSES_PUB_PAYS <- map_df(Liste_Pays_ISO3, \(p) Import_WEO(p, "GGX_NGDP", 0, 2
 list_indic <- list(
   "PIB (Mrd USD)"        = PIB_PAYS,
   "Croissance (% PIB)"  = PIB_GROWTH_PAYS,
-  "Inflation (% PIB)"    = INFLATION_PAYS,
+  "Inflation (%)"    = INFLATION_PAYS,
   "IDE (% PIB)"          = IDE_PAYS,
   "Dette (% PIB)"        = DETTE_PAYS,
   "PIB/hab (USD)"        = PIB_HAB_PAYS,
@@ -380,5 +409,106 @@ df_ECON_complet |>
       )
     )
   )
+```
+
+Bilan économique de la zone CEMAC. 
+
+```{r}
+#| label: Tableau des CEMAC
+#| echo: false
+#| message: false
+#| warning: false
+
+df_CEMAC <- imap(list_indic, nettoyer_df) |>
+  reduce(left_join, by = "Pays") |> 
+  filter(Pays != "São Tomé",
+         Pays != "RDC")
+
+Moyenne_CEMAC <- 
+  df_CEMAC|>
+  summarise(
+    Pays = "Moyenne",
+    across(where(is.numeric) & !starts_with("Yr_"), ~ round(mean(.x, na.rm = TRUE), 2)),
+    across(starts_with("Yr_"), ~ NA)
+  )
+
+df_CEMAC <- 
+  bind_rows(df_CEMAC, Moyenne_CEMAC) |> 
+  select(!starts_with("Yr"))
+```
+
+
+```{r}
+#| label: PIB CEMAC Plot
+#| echo: false
+#| message: false
+#| warning: false
+
+PIB_CEMAC <-
+  df_CEMAC |> 
+  select(Pays, `PIB (Mrd USD)`) |>
+  filter(Pays != "Moyenne") |> 
+  mutate(Pourcentage = round((`PIB (Mrd USD)` / sum(`PIB (Mrd USD)`)) * 100, 1),
+         Label = paste0(Pourcentage, "%"))
+
+PIB_CEMAC_Plot <- 
+  ggplot(PIB_CEMAC, aes(x ="", y = `PIB (Mrd USD)`, fill = Pays)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y", start = 0) +
+  geom_text(
+    aes(label = Label),
+    position = position_stack(vjust = 0.5),
+    color = "white",
+    fontface = "bold"
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  theme_void() +
+  labs(
+    title = "Répartition par pays",
+    fill = ""
+  )
+  
+```
+
+```{r}
+#| label: PIB CEMAC Time Plot
+#| echo: false
+#| message: false
+#| warning: false
+
+PIB_CAM <- dataset <- as.data.frame(readSDMX(
+    providerId = "IMF_DATA",
+    resource = "data",
+    flowRef = "IMF.RES,WEO",
+    key = "CMR.NGDPDPC"
+  ))
+
+PIB_CAM <- Import_WEO_Time_Series("CMR", "NGDPDPC", 0, 2)
+  
+
+table_correspondance <- tibble(
+  Pays_ISO = Liste_Pays_ISO3,
+  Pays = Liste_Pays
+)
+
+PIB_HAB_SERIE <- 
+  map_df(Liste_Pays_ISO3, \(p) Import_WEO_Time_Series(p, "NGDPDPC", 0, 2)) |>
+  left_join(table_correspondance, by = "Pays_ISO") |>
+  select(Pays, annee, valeur) |> 
+  pivot_wider(
+    names_from = annee,
+    values_from = valeur
+  ) |> 
+  mutate(Pays = Nom_Pays) |> 
+  filter(Pays != "RDC", Pays != "São Tomé") 
+
+Moyenne <- 
+  PIB_HAB_SERIE |>
+  summarise(
+    Pays = "Moyenne",
+    across(where(is.numeric), ~ round(mean(.x, na.rm = TRUE), 2))
+  )
+
+PIB_HAB_SERIE <- bind_rows(PIB_HAB_SERIE, Moyenne)
 ```
 
