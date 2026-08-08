@@ -1,7 +1,9 @@
 ---
 title: "Rapport Economies CEMAC"
 author: "Tony De Amorim"
-format: html
+format: 
+  html:
+    page-layout: full
 ---
 
 ```{r}
@@ -19,6 +21,8 @@ library(wbstats)
 library(knitr)
 library(kableExtra)
 library(rsdmx)
+library(DT)
+library(htmltools)
 ```
 
 ```{r}
@@ -109,22 +113,41 @@ Import_ECON_data <- function(WB_CODE, PAYS, EXP, ROUND) {
 #| warning: false
 #| echo: false
 
-Import_WEO <- function(ISO, REF, EXP, ROUND){
-  ref <- 'IMF.RES,WEO'
-  filter <- paste0(ISO,".", REF)
-  dataset <- as.data.frame(readSDMX(providerId = 'IMF_DATA',
-                                  resource = 'data',
-                                  flowRef = ref,
-                                  key = filter))
+Import_WEO <- function(ISO, REF, EXP, ROUND) {
+  ref <- "IMF.RES,WEO"
+  filter <- paste0(ISO, ".", REF)
+  capture.output(dataset <- as.data.frame(suppressMessages(readSDMX(
+    providerId = "IMF_DATA",
+    resource = "data",
+    flowRef = ref,
+    key = filter
+  ))))
   dataset <-
-  dataset |> 
+    dataset |>
     mutate(TIME_PERIOD = as.numeric(TIME_PERIOD)) |>
     filter(TIME_PERIOD <= 2026, !is.na(OBS_VALUE)) |>
-    slice_max(order_by = TIME_PERIOD, n = 1) |> 
-    select(TIME_PERIOD, OBS_VALUE) |> 
+    slice_max(order_by = TIME_PERIOD, n = 1) |>
+    select(TIME_PERIOD, OBS_VALUE) |>
     mutate(OBS_VALUE = round(as.numeric(OBS_VALUE) / (10^EXP), ROUND))
 }
+```
 
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+
+nettoyer_df <- function(df, nom_indic) {
+  col_val <- intersect(c("valeur", "OBS_VALUE"), names(df))[1]
+  col_yr  <- intersect(c("annee", "TIME_PERIOD"), names(df))[1]
+  
+  df |>
+    transmute(
+      Pays = Nom_Pays,
+      !!nom_indic := as.numeric(.data[[col_val]]),
+      !!paste0("Yr_", nom_indic) := .data[[col_yr]]
+    )
+}
 ```
 
 # Préambule
@@ -226,7 +249,7 @@ Fiche_Tchad
 ```
 
 :::
-*Source : Banque Mondiale (WDI) & Données officielles de l'État.*
+*Source : Banque Mondiale (WDI).*
 
 # Bilan économique
 
@@ -243,30 +266,45 @@ Liste_Pays_ISO3 <- c("CMR", "CAF", "COG", "GAB", "GNQ", "STP", "TCD")
 PIB_PAYS <- map_df(
   Liste_Pays,
   \(p) Import_ECON_data("NY.GDP.MKTP.CD", p, 9, 3)
-  )
+)
 
 PIB_GROWTH_PAYS <- map_df(
   Liste_Pays,
   \(p) Import_ECON_data("NY.GDP.MKTP.KD.ZG", p, 0, 1)
-  )
+)
 
 INFLATION_PAYS <- map_df(
   Liste_Pays,
   \(p) Import_ECON_data("FP.CPI.TOTL.ZG", p, 0, 1)
-  )
+)
 
 IDE_PAYS <- map_df(
   Liste_Pays,
   \(p) Import_ECON_data("BX.KLT.DINV.WD.GD.ZS", p, 0, 1)
-  )
+)
 
 DETTE_PAYS <- map_df(
   Liste_Pays_ISO3,
-  \(p) Import_WEO(p,"GGXWDG_NGDP", 0, 2)
-) |> 
-  mutate(Pays = Nom_Pays) |> 
+  \(p) Import_WEO(p, "GGXWDG_NGDP", 0, 2)
+) |>
+  mutate(Pays = Liste_Pays) |>
   relocate(Pays)
 
+PIB_HAB_PAYS <- map_df(Liste_Pays_ISO3, \(p) Import_WEO(p, "NGDPDPC", 0, 0)) |>
+  mutate(Pays = Liste_Pays) |>
+  relocate(Pays)
+
+SOLDE_BUDGET_PAYS <- map_df(Liste_Pays_ISO3, \(p) Import_WEO(p, "GGXCNL_NGDP", 0, 2)) |>
+  mutate(Pays = Liste_Pays) |>
+  relocate(Pays)
+
+COMPTE_COURANT_PAYS <- map_df(Liste_Pays_ISO3, \(p) Import_WEO(p, "BCA_NGDPD", 0, 2)) |>
+  mutate(Pays = Liste_Pays) |>
+  relocate(Pays)
+
+DEPENSES_PUB_PAYS <- map_df(Liste_Pays_ISO3, \(p) Import_WEO(p, "GGX_NGDP", 0, 2)) |>
+  mutate(Pays = Liste_Pays) |>
+  relocate(Pays)
 ```
 
 
@@ -275,43 +313,52 @@ DETTE_PAYS <- map_df(
 #| echo: false
 #| message: false
 #| warning: false
+#| column: page
 
-df_ECON <- PIB_PAYS |>
-  select(Pays, PIB = valeur, annee_pib = annee) |>
-  left_join(
-    PIB_GROWTH_PAYS |> select(Pays, PIB_Growth = valeur, annee_growth = annee),
-    by = "Pays"
-  ) |>
-  left_join(
-    INFLATION_PAYS |> select(Pays, Inflation = valeur, annee_inf = annee),
-    by = "Pays")|>
-  left_join(
-    IDE_PAYS |> select(Pays, IDE = valeur, annee_ide = annee),
-    by = "Pays"
-  ) |> 
-  mutate(Pays = Nom_Pays)
+list_indic <- list(
+  "PIB (Mrd USD)"        = PIB_PAYS,
+  "Croissance (% PIB)"  = PIB_GROWTH_PAYS,
+  "Inflation (% PIB)"    = INFLATION_PAYS,
+  "IDE (% PIB)"          = IDE_PAYS,
+  "Dette (% PIB)"        = DETTE_PAYS,
+  "PIB/hab (USD)"        = PIB_HAB_PAYS,
+  "Solde Budg. (% PIB)"  = SOLDE_BUDGET_PAYS,
+  "Compte Cour. (% PIB)" = COMPTE_COURANT_PAYS,
+  "Dépenses Pub. (% PIB)"= DEPENSES_PUB_PAYS
+)
 
-yr_pib <- paste(unique(df_ECON$annee_pib), collapse = "/")
-yr_growth <- paste(unique(df_ECON$annee_growth), collapse = "/")
-yr_inf <- paste(unique(df_ECON$annee_inf), collapse = "/")
-yr_ide <- paste(unique(df_ECON$annee_ide), collapse = "/")
+
+df_ECON <- imap(list_indic, nettoyer_df) |>
+  reduce(left_join, by = "Pays")
+
+texte_footnote <- df_ECON |>
+  select(starts_with("Yr_")) |>
+  imap_chr(\(col, col_name) {
+    indic_name <- str_remove(col_name, "^Yr_")
+    annees <- paste(unique(na.omit(col)), collapse = "/")
+    paste0(indic_name, " : ", annees)
+  }) |>
+  paste(collapse = " | ")
+
 
 df_ECON |>
-  select(Pays, PIB, PIB_Growth, Inflation, IDE) |>
-  kable(
-    col.names = c("Pays", "PIB (Mrd USD)", "Croissance PIB (% PIB)", "Inflation (% PIB)", "IDE (% PIB)"),
-    align = c("l", "r", "r", "r", "r")
-  ) |>
-  kable_styling(
-    bootstrap_options = c("striped", "hover", "condensed"), 
-    full_width = FALSE
-  ) |>
-  footnote(
-    general = paste0("Années des données — PIB : ", yr_pib, " | Croissance : ", yr_growth, " | Inflation : ", yr_inf, " | IDE : ", yr_ide)
+  select(-starts_with("Yr_")) |>
+  datatable(
+    rownames = FALSE,
+    extensions = c('Buttons'),
+    caption = tags$caption(
+      style = 'caption-side: bottom; text-align: left; font-size: 0.85em; color: #555; padding-top: 8px;',
+      paste0("Années des données — ", texte_footnote)
+    ),
+    options = list(
+      dom = 'Bfrtip',                  
+      buttons = c('csv', 'excel'),      
+      pageLength = 10,
+      scrollX = TRUE,       
+      language = list(
+        url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/French.json' 
+      )
+    )
   )
 ```
-
-
-
-
 
