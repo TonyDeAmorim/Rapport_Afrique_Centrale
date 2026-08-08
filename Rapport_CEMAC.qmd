@@ -24,14 +24,14 @@ library(kableExtra)
 #| message: false
 #| warning: false
 #| echo: false
-Import_Pop <- function(x){ 
+Import_Pop <- function(x) {
   name <- paste("pop_", x)
   name <- wb_data(
-  indicator = "SP.POP.TOTL",
-  country = x,
-  mrv = 1
+    indicator = "SP.POP.TOTL",
+    country = x,
+    mrv = 1
   )
-  name <- paste0(format(round(name$SP.POP.TOTL/ 1e6, 2), nsmall = 2), "M (", name$date, ")")
+  name <- paste0(format(round(name$SP.POP.TOTL / 1e6, 2), nsmall = 2), "M (", name$date, ")")
 }
 ```
 
@@ -40,11 +40,11 @@ Import_Pop <- function(x){
 #| warning: false
 #| echo: false
 
-Import_Dens <- function(x){ 
+Import_Dens <- function(x) {
   name <- wb_data(
     indicator = "EN.POP.DNST",
-  country = x,
-  mrv = 1
+    country = x,
+    mrv = 1
   )
   name <- paste(round(name$EN.POP.DNST, 2), "(", name$date, ")")
 }
@@ -55,7 +55,7 @@ Import_Dens <- function(x){
 #| warning: false
 #| echo: false
 
-Fiche_Pays <- function(ISO, CAP, POP, SUP, DENS, LG, PRES, IND){
+Fiche_Pays <- function(ISO, CAP, POP, SUP, DENS, LG, PRES, IND) {
   df <- paste("Fiche_", ISO)
   df <-
     tibble(
@@ -65,21 +65,23 @@ Fiche_Pays <- function(ISO, CAP, POP, SUP, DENS, LG, PRES, IND){
       "Densité (hab/km²)" = DENS,
       "Langue(s) officielle(s)" = LG,
       Président = PRES,
-      "Fête Nationale" = IND) 
-    df <-
-    df |> 
-  pivot_longer(
-    cols = everything(),
-    names_to = "Indicateur",
-    values_to = "Valeur") |> 
-  kable(
-    col.names = c("", ""))  |> 
-  kable_styling( full_width = FALSE) |> 
-  column_spec(1, bold = TRUE) |> 
-      column_spec(1, bold = TRUE, width = "40%") |> 
-      column_spec(2, width = "60%")
-  }
-    
+      "Fête Nationale" = IND
+    )
+  df <-
+    df |>
+    pivot_longer(
+      cols = everything(),
+      names_to = "Indicateur",
+      values_to = "Valeur"
+    ) |>
+    kable(
+      col.names = c("", "")
+    ) |>
+    kable_styling(full_width = FALSE) |>
+    column_spec(1, bold = TRUE) |>
+    column_spec(1, bold = TRUE, width = "40%") |>
+    column_spec(2, width = "60%")
+}
 ```
 
 ```{r}
@@ -87,17 +89,18 @@ Fiche_Pays <- function(ISO, CAP, POP, SUP, DENS, LG, PRES, IND){
 #| warning: false
 #| echo: false
 
-Import_ECON_data <- function(WB_CODE, PAYS, EXP){
+Import_ECON_data <- function(WB_CODE, PAYS, EXP, ROUND) {
   df <- wb_data(
     indicator = WB_CODE,
     country = PAYS,
     mrv = 1
   )
-  valeur <- round(df[[WB_CODE]] / 10^EXP, 3)
-  annee <- df$date
-  df <- paste0(valeur, " (", annee, ")")
+  tibble(
+    Pays = PAYS,
+    valeur = round(df[[WB_CODE]] / (10^EXP), ROUND),
+    annee = as.numeric(df$date)
+  )
 }
-
 ```
 
 # Préambule
@@ -179,10 +182,11 @@ Fiche_GQ
 #| warning: false
 #| echo: false
 
-Fiche_ST <- Fiche_Pays("ST", "São Tomé", Import_Pop("ST"), "1 001", Import_Dens("ST"), "Portugais", "Carlos Vila Nova (2021 - )", "12 juillet 1975") |> 
+Fiche_ST <- Fiche_Pays("ST", "São Tomé", Import_Pop("ST"), "1 001", Import_Dens("ST"), "Portugais", "Carlos Vila Nova (2021 - )", "12 juillet 1975") |>
   footnote(
-    general = "Pays non-membre CEMAC")
-Fiche_ST 
+    general = "Pays non-membre CEMAC"
+  )
+Fiche_ST
 ```
 
 ## Tchad
@@ -202,3 +206,65 @@ Fiche_Tchad
 
 # Bilan économique
 
+```{r}
+#| label: Importation et formatage des données
+#| echo: false
+#| message: false
+#| warning: false
+
+Nom_Pays <- c("Cameroun", "Centrafrique", "Congo", "Gabon", "Guinée Equ.", "São Tomé", "Tchad")
+Liste_Pays <- c("CMR", "CF", "CG", "GA", "GQ", "ST", "TD")
+
+PIB_PAYS <- map_df(
+  Liste_Pays,
+  \(p) Import_ECON_data("NY.GDP.MKTP.CD", p, 9, 3)
+  )
+
+PIB_GROWTH_PAYS <- map_df(
+  Liste_Pays,
+  \(p) Import_ECON_data("NY.GDP.MKTP.KD.ZG", p, 0, 1)
+  )
+
+INFLATION_PAYS <- map_df(
+  Liste_Pays,
+  \(p) Import_ECON_data("FP.CPI.TOTL.ZG", p, 0, 1)
+  )
+```
+
+
+```{r}
+#| label: Tableau des données
+#| echo: false
+#| message: false
+#| warning: false
+
+df_ECON <- PIB_PAYS |>
+  select(Pays, PIB = valeur, annee_pib = annee) |>
+  left_join(
+    PIB_GROWTH_PAYS |> select(Pays, PIB_Growth = valeur, annee_growth = annee),
+    by = "Pays"
+  ) |>
+  left_join(
+    INFLATION_PAYS |> select(Pays, Inflation = valeur, annee_inf = annee),
+    by = "Pays"
+  ) |> 
+  mutate(Pays = Nom_Pays)
+
+yr_pib <- paste(unique(df_ECON$annee_pib), collapse = "/")
+yr_growth <- paste(unique(df_ECON$annee_growth), collapse = "/")
+yr_inf <- paste(unique(df_ECON$annee_inf), collapse = "/")
+
+df_ECON |>
+  select(Pays, PIB, PIB_Growth, Inflation) |>
+  kable(
+    col.names = c("Pays", "PIB (Mrd USD)", "Croissance PIB (%)", "Inflation (%)"),
+    align = c("l", "r", "r", "r")
+  ) |>
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed"), 
+    full_width = FALSE
+  ) |>
+  footnote(
+    general = paste0("Années des données — PIB : ", yr_pib, " | Croissance : ", yr_growth, " | Inflation : ", yr_inf)
+  )
+```
