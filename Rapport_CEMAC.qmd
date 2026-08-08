@@ -36,11 +36,37 @@ Import_Pop <- function(x){
 ```
 
 ```{r}
-#| echo: false
 #| message: false
 #| warning: false
-Fiche_Pays_Kable <- function(df){
+#| echo: false
+
+Import_Dens <- function(x){ 
+  name <- wb_data(
+  indicator = "EN.POP.DNST",
+  country = x,
+  mrv = 1
+  )
+  name <- paste(round(name$EN.POP.DNST, 2), "(", name$date, ")")
+}
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+
+Fiche_Pays <- function(ISO, CAP, POP, SUP, DENS, LG, PRES, IND){
+  df <- paste("Fiche_", ISO)
   df <-
+    tibble(
+      Capitale = CAP,
+      Population = Import_Pop(ISO),
+      "Superficie (km²)" = SUP,
+      "Densité (hab/km²)" = DENS,
+      "Langue(s) officielle(s)" = LG,
+      Président = PRES,
+      "Fête Nationale" = IND) 
+    df <-
     df |> 
   pivot_longer(
     cols = everything(),
@@ -49,8 +75,11 @@ Fiche_Pays_Kable <- function(df){
   kable(
     col.names = c("", ""))  |> 
   kable_styling( full_width = FALSE) |> 
-  column_spec(1, bold = TRUE)
-}
+  column_spec(1, bold = TRUE) |> 
+      column_spec(1, bold = TRUE, width = "40%") |> 
+      column_spec(2, width = "60%")
+  }
+    
 ```
 
 # Préambule
@@ -70,36 +99,8 @@ L'entièreté des analyses a été réalisée sur R et les différentes bases de
 #| warning: false
 #| echo: false
 
-Fiche_Cameroun <- 
-  tibble(
-    Capitale = "Yaoundé",
-    Population = Import_Pop("CMR"),
-    Président = "Paul Biya (1982- )",
-    Langues_officielles = "Français, Anglais"
-  ) 
-
-Fiche_Cameroun <- Fiche_Pays_Kable(Fiche_Cameroun)
+Fiche_Cameroun <- Fiche_Pays("CMR", "Yaoundé", Import_Pop("CMR"), "475 442", Import_Dens("CMR"), "Français, Anglais", "Paul Biya (1982- )", "11 août 1960")
 Fiche_Cameroun
-```
-
-## Tchad
-
-```{r}
-#| label: Fiche pays Tchad
-#| message: false
-#| warning: false
-#| echo: false
-
-Fiche_Tchad <- 
-  tibble(
-    Capitale = " N'Djamena",
-    Population = Import_Pop("TD"),
-    Président = "Mahamat Déby (2024- )",
-    Langues_officielles = "Français, Arabe"
-  ) 
-
-Fiche_Tchad <- Fiche_Pays_Kable(Fiche_Tchad)
-Fiche_Tchad
 ```
 
 ## République Centrafricaine
@@ -110,18 +111,73 @@ Fiche_Tchad
 #| warning: false
 #| echo: false
 
-Fiche_CF <- 
-  tibble(
-    Capitale = " Bangui",
-    Population = Import_Pop("CF"),
-    Président = "Faustin-Archange Touadéra (2016- )",
-    Langues_officielles = "Français, Sango"
-  ) 
-
-Fiche_CF <- Fiche_Pays_Kable(Fiche_CF)
+Fiche_CF <- Fiche_Pays("CF", "Bangui", Import_Pop("CF"), "622 984", Import_Dens("CF"), "Français, Sango", "Faustin-Archange Touadéra (2016- )", "13 août 1960")
 Fiche_CF
 ```
 
+
+## République du Congo
+
+```{r}
+#| label: Fiche pays Congo
+#| message: false
+#| warning: false
+#| echo: false
+
+Fiche_CG <- Fiche_Pays("CG", "Brazzaville", Import_Pop("CG"), "342 000", Import_Dens("CG"), "Français", "Denis Sassou-Nguesso (1997- )", "12 août 1960")
+Fiche_CG
+```
+
+## Gabon
+
+```{r}
+#| label: Fiche pays Gabon
+#| message: false
+#| warning: false
+#| echo: false
+
+Fiche_GA <- Fiche_Pays("GA", "Libreville", Import_Pop("GA"), "267 667", Import_Dens("GA"), "Français", "Brice Clotaire Oligui Nguema (2023- )", "17 août 1960")
+Fiche_GA
+```
+
+## Guinée équatoriale
+
+```{r}
+#| label: Fiche pays Guinée Equatoriale
+#| message: false
+#| warning: false
+#| echo: false
+
+
+Fiche_GQ <- Fiche_Pays("GQ", "Ciudad de la Paz", Import_Pop("GQ"), "28,051", Import_Dens("GQ"), "Français, Espagnole, Portugais", "Teodoro Obiang Nguema Mbasogo (1982 - )", "12 octobre 1968")
+Fiche_GQ
+```
+
+## Sao Tomé-et-Principe
+
+```{r}
+#| label: Fiche pays Sao Tomé
+#| message: false
+#| warning: false
+#| echo: false
+
+Fiche_ST <- Fiche_Pays("ST", "São Tomé", Import_Pop("ST"), "1 001", Import_Dens("ST"), "Portugais", "Carlos Vila Nova (2021 - )", "12 juillet 1975") |> 
+  footnote(
+    general = "Pays non-membre CEMAC")
+Fiche_ST 
+```
+
+## Tchad
+
+```{r}
+#| label: Fiche pays Tchad
+#| message: false
+#| warning: false
+#| echo: false
+
+Fiche_Tchad <- Fiche_Pays("TD", "N'Djamena", Import_Pop("TD"), "1 284 000", Import_Dens("TD"), "Français, Arabe", "Mahamat Déby (2024- )", "11 août 1960")
+Fiche_Tchad
+```
+
 :::
-
-
+*Source : Banque Mondiale (WDI) & Données officielles de l'État.*
