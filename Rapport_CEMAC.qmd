@@ -238,6 +238,7 @@ Fiche_Tchad
 
 Nom_Pays <- c("Cameroun", "Centrafrique", "Congo", "Gabon", "Guinée Equ.", "São Tomé", "Tchad")
 Liste_Pays <- c("CMR", "CF", "CG", "GA", "GQ", "ST", "TD")
+Liste_Pays_ISO3 <- c("CMR", "CAF", "COG", "GAB", "GNQ", "STP", "TCD")
 
 PIB_PAYS <- map_df(
   Liste_Pays,
@@ -258,6 +259,13 @@ IDE_PAYS <- map_df(
   Liste_Pays,
   \(p) Import_ECON_data("BX.KLT.DINV.WD.GD.ZS", p, 0, 1)
   )
+
+DETTE_PAYS <- map_df(
+  Liste_Pays_ISO3,
+  \(p) Import_WEO(p,"GGXWDG_NGDP", 0, 2)
+) |> 
+  mutate(Pays = Nom_Pays) |> 
+  relocate(Pays)
 
 ```
 
@@ -304,22 +312,6 @@ df_ECON |>
 ```
 
 
-
-
-
-
-
-
-
-```{r}
-
-
-
-
-Bitch <- Import_WEO("CMR", "GGXWDG_NGDP", 0, 2)
-
-
-```
 
 
 
