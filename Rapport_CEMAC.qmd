@@ -14,6 +14,30 @@ library(tidyverse)
 library(knitr)
 library(WDI)
 library(jsonlite)
+library(wbstats)
+```
+
+```{r}
+#| label: Fonction Convertisseur
+#| message: false
+#| warning: false
+
+Convertisseur <- function(x) {
+  paste0(format(round(x / 1e6, 2), nsmall = 2), "M")
+}
+```
+
+```{r}
+#| label: Fonction Import Pop
+#| message: false
+#| warning: false
+Import_Pop <- function(x){ 
+  wb_data(
+  indicator = "SP.POP.TOTL",
+  country = x,
+  mrv = 1
+  )
+}
 ```
 
 
@@ -33,13 +57,17 @@ L'entièreté des analyses a été réalisée sur R et les différentes bases de
 #| message: true
 #| warning: false
 
+pop_cmr <- Import_Pop("CMR")
+
+
 Fiche_Cameroun <- tibble(
   Capitale = "Yaoundé",
-  Population = WDI(country = "CM", indicator = "SP.POP.TOTL", latest = 1)$SP.POP.TOTL,
+  Population = Convertisseur(pop_cmr$SP.POP.TOTL),
   Président = "Paul Biya (1982- )"
 )
 
 ```
+
 
 ## Tchad
 
