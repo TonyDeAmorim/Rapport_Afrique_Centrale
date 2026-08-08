@@ -8,6 +8,7 @@ format: html
 #| label: Library Imports
 #| message: false
 #| warning: false
+#| echo: false
 
 library(ggplot2)
 library(tidyverse)
@@ -15,31 +16,42 @@ library(knitr)
 library(WDI)
 library(jsonlite)
 library(wbstats)
+library(knitr)
+library(kableExtra)
 ```
 
 ```{r}
-#| label: Fonction Convertisseur
 #| message: false
 #| warning: false
-
-Convertisseur <- function(x) {
-  paste0(format(round(x / 1e6, 2), nsmall = 2), "M")
-}
-```
-
-```{r}
-#| label: Fonction Import Pop
-#| message: false
-#| warning: false
+#| echo: false
 Import_Pop <- function(x){ 
-  wb_data(
+  name <- paste("pop_", x)
+  name <- wb_data(
   indicator = "SP.POP.TOTL",
   country = x,
   mrv = 1
   )
+  name <- paste0(format(round(name$SP.POP.TOTL/ 1e6, 2), nsmall = 2), "M (", name$date, ")")
 }
 ```
 
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+Fiche_Pays_Kable <- function(df){
+  df <-
+    df |> 
+  pivot_longer(
+    cols = everything(),
+    names_to = "Indicateur",
+    values_to = "Valeur") |> 
+  kable(
+    col.names = c("", ""))  |> 
+  kable_styling( full_width = FALSE) |> 
+  column_spec(1, bold = TRUE)
+}
+```
 
 # Préambule
 
@@ -54,22 +66,61 @@ L'entièreté des analyses a été réalisée sur R et les différentes bases de
 
 ```{r}
 #| label: Fiche pays Cameroun
-#| message: true
+#| message: false
 #| warning: false
+#| echo: false
 
-pop_cmr <- Import_Pop("CMR")
+Fiche_Cameroun <- 
+  tibble(
+    Capitale = "Yaoundé",
+    Population = Import_Pop("CMR"),
+    Président = "Paul Biya (1982- )",
+    Langues_officielles = "Français, Anglais"
+  ) 
 
-
-Fiche_Cameroun <- tibble(
-  Capitale = "Yaoundé",
-  Population = Convertisseur(pop_cmr$SP.POP.TOTL),
-  Président = "Paul Biya (1982- )"
-)
-
+Fiche_Cameroun <- Fiche_Pays_Kable(Fiche_Cameroun)
+Fiche_Cameroun
 ```
 
-
 ## Tchad
+
+```{r}
+#| label: Fiche pays Tchad
+#| message: false
+#| warning: false
+#| echo: false
+
+Fiche_Tchad <- 
+  tibble(
+    Capitale = " N'Djamena",
+    Population = Import_Pop("TD"),
+    Président = "Mahamat Déby (2024- )",
+    Langues_officielles = "Français, Arabe"
+  ) 
+
+Fiche_Tchad <- Fiche_Pays_Kable(Fiche_Tchad)
+Fiche_Tchad
+```
+
+## République Centrafricaine
+
+```{r}
+#| label: Fiche pays Centrafrique
+#| message: false
+#| warning: false
+#| echo: false
+
+Fiche_CF <- 
+  tibble(
+    Capitale = " Bangui",
+    Population = Import_Pop("CF"),
+    Président = "Faustin-Archange Touadéra (2016- )",
+    Langues_officielles = "Français, Sango"
+  ) 
+
+Fiche_CF <- Fiche_Pays_Kable(Fiche_CF)
+Fiche_CF
+```
 
 :::
 
