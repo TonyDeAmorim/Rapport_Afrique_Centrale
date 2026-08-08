@@ -18,6 +18,7 @@ library(jsonlite)
 library(wbstats)
 library(knitr)
 library(kableExtra)
+library(rsdmx)
 ```
 
 ```{r}
@@ -101,6 +102,29 @@ Import_ECON_data <- function(WB_CODE, PAYS, EXP, ROUND) {
     annee = as.numeric(df$date)
   )
 }
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+
+Import_WEO <- function(ISO, REF, EXP, ROUND){
+  ref <- 'IMF.RES,WEO'
+  filter <- paste0(ISO,".", REF)
+  dataset <- as.data.frame(readSDMX(providerId = 'IMF_DATA',
+                                  resource = 'data',
+                                  flowRef = ref,
+                                  key = filter))
+  dataset <-
+  dataset |> 
+    mutate(TIME_PERIOD = as.numeric(TIME_PERIOD)) |>
+    filter(TIME_PERIOD <= 2026, !is.na(OBS_VALUE)) |>
+    slice_max(order_by = TIME_PERIOD, n = 1) |> 
+    select(TIME_PERIOD, OBS_VALUE) |> 
+    mutate(OBS_VALUE = round(as.numeric(OBS_VALUE) / (10^EXP), ROUND))
+}
+
 ```
 
 # Préambule
@@ -229,6 +253,12 @@ INFLATION_PAYS <- map_df(
   Liste_Pays,
   \(p) Import_ECON_data("FP.CPI.TOTL.ZG", p, 0, 1)
   )
+
+IDE_PAYS <- map_df(
+  Liste_Pays,
+  \(p) Import_ECON_data("BX.KLT.DINV.WD.GD.ZS", p, 0, 1)
+  )
+
 ```
 
 
@@ -246,6 +276,9 @@ df_ECON <- PIB_PAYS |>
   ) |>
   left_join(
     INFLATION_PAYS |> select(Pays, Inflation = valeur, annee_inf = annee),
+    by = "Pays")|>
+  left_join(
+    IDE_PAYS |> select(Pays, IDE = valeur, annee_ide = annee),
     by = "Pays"
   ) |> 
   mutate(Pays = Nom_Pays)
@@ -253,18 +286,40 @@ df_ECON <- PIB_PAYS |>
 yr_pib <- paste(unique(df_ECON$annee_pib), collapse = "/")
 yr_growth <- paste(unique(df_ECON$annee_growth), collapse = "/")
 yr_inf <- paste(unique(df_ECON$annee_inf), collapse = "/")
+yr_ide <- paste(unique(df_ECON$annee_ide), collapse = "/")
 
 df_ECON |>
-  select(Pays, PIB, PIB_Growth, Inflation) |>
+  select(Pays, PIB, PIB_Growth, Inflation, IDE) |>
   kable(
-    col.names = c("Pays", "PIB (Mrd USD)", "Croissance PIB (%)", "Inflation (%)"),
-    align = c("l", "r", "r", "r")
+    col.names = c("Pays", "PIB (Mrd USD)", "Croissance PIB (% PIB)", "Inflation (% PIB)", "IDE (% PIB)"),
+    align = c("l", "r", "r", "r", "r")
   ) |>
   kable_styling(
     bootstrap_options = c("striped", "hover", "condensed"), 
     full_width = FALSE
   ) |>
   footnote(
-    general = paste0("Années des données — PIB : ", yr_pib, " | Croissance : ", yr_growth, " | Inflation : ", yr_inf)
+    general = paste0("Années des données — PIB : ", yr_pib, " | Croissance : ", yr_growth, " | Inflation : ", yr_inf, " | IDE : ", yr_ide)
   )
 ```
+
+
+
+
+
+
+
+
+
+```{r}
+
+
+
+
+Bitch <- Import_WEO("CMR", "GGXWDG_NGDP", 0, 2)
+
+
+```
+
+
+
