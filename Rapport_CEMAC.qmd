@@ -24,6 +24,7 @@ library(rsdmx)
 library(DT)
 library(htmltools)
 library(ggthemes)
+library(gganimate)
 ```
 
 ```{r}
@@ -303,6 +304,10 @@ Fiche_Tchad
 Nom_Pays <- c("Cameroun", "Centrafrique", "Congo", "Gabon", "Guinée Equ.", "RDC", "São Tomé", "Tchad")
 Liste_Pays <- c("CMR", "CF", "CG", "GA", "GQ", "COD", "ST", "TD")
 Liste_Pays_ISO3 <- c("CMR", "CAF", "COG", "GAB", "GNQ", "COD", "STP", "TCD")
+table_correspondance <- tibble(
+  Pays_ISO = Liste_Pays_ISO3,
+  Pays = Liste_Pays
+)
 
 PIB_PAYS <- map_df(
   Liste_Pays,
@@ -476,21 +481,6 @@ PIB_CEMAC_Plot <-
 #| message: false
 #| warning: false
 
-PIB_CAM <- dataset <- as.data.frame(readSDMX(
-    providerId = "IMF_DATA",
-    resource = "data",
-    flowRef = "IMF.RES,WEO",
-    key = "CMR.NGDPDPC"
-  ))
-
-PIB_CAM <- Import_WEO_Time_Series("CMR", "NGDPDPC", 0, 2)
-  
-
-table_correspondance <- tibble(
-  Pays_ISO = Liste_Pays_ISO3,
-  Pays = Liste_Pays
-)
-
 PIB_HAB_SERIE <- 
   map_df(Liste_Pays_ISO3, \(p) Import_WEO_Time_Series(p, "NGDPDPC", 0, 2)) |>
   left_join(table_correspondance, by = "Pays_ISO") |>
@@ -510,5 +500,25 @@ Moyenne <-
   )
 
 PIB_HAB_SERIE <- bind_rows(PIB_HAB_SERIE, Moyenne)
+
+PIB_HAB_SERIE_MOY <-
+  Moyenne |> 
+  pivot_longer(
+    cols = -Pays, 
+    names_to = "Annee", 
+    values_to = "PIB_Hab"
+  ) |> 
+  mutate(Annee = as.numeric(Annee))
+
+ggplot(PIB_HAB_SERIE_MOY, aes(x = Annee, y = PIB_Hab)) +
+  geom_line(color = "#2b5c8f", linewidth = 1.2) +
+  geom_point(color = "#d9534f", size = 3) +
+  theme_minimal(base_size = 14) +
+  labs(
+    title = "Évolution du PIB moyen par habitant",
+    x = "Année",
+    y = "PIB/hab (USD)"
+  ) +
+  transition_reveal(Annee)
 ```
 
