@@ -42,7 +42,7 @@ Import_Pop <- function(x){
 
 Import_Dens <- function(x){ 
   name <- wb_data(
-  indicator = "EN.POP.DNST",
+    indicator = "EN.POP.DNST",
   country = x,
   mrv = 1
   )
@@ -80,6 +80,24 @@ Fiche_Pays <- function(ISO, CAP, POP, SUP, DENS, LG, PRES, IND){
       column_spec(2, width = "60%")
   }
     
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| echo: false
+
+Import_ECON_data <- function(WB_CODE, PAYS, EXP){
+  df <- wb_data(
+    indicator = WB_CODE,
+    country = PAYS,
+    mrv = 1
+  )
+  valeur <- round(df[[WB_CODE]] / 10^EXP, 3)
+  annee <- df$date
+  df <- paste0(valeur, " (", annee, ")")
+}
+
 ```
 
 # Préambule
@@ -181,3 +199,6 @@ Fiche_Tchad
 
 :::
 *Source : Banque Mondiale (WDI) & Données officielles de l'État.*
+
+# Bilan économique
+
