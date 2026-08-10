@@ -25,12 +25,91 @@ library(DT)
 library(htmltools)
 library(ggthemes)
 library(gganimate)
+library(comtradr)
+```
+
+```{r}
+#| message: true
+#| warning: false
+#| echo: false
+
+set_primary_comtrade_key("31a18d94cdf04f13b9c8a59ef63110c2")
+
+
+get_COMTRADE_data_partners <- function(REPORTER, PARTNER, FREQUENCY, FLOW){
+  df <- ct_get_data(
+    reporter = REPORTER,
+    partner = PARTNER,
+    frequency = FREQUENCY ,
+    type = "goods",
+    flow_direction = FLOW,
+    start_date = 2020,
+    end_date = 2030,
+    process = TRUE,
+    tidy_cols = TRUE,
+    primary_token = get_primary_comtrade_key()
+  )
+  df <-
+    df |>
+    filter(period == max(period, na.rm = TRUE)) |> 
+    select(
+      Partenaire = partner_desc,
+      Valeur_M_USD = primary_value,
+      Annee = period) |> 
+    filter(Partenaire != "World") |> 
+    mutate(Valeur_M_USD = round(Valeur_M_USD / 1e6, 1)) |>
+    arrange(desc(Valeur_M_USD)) |>
+    slice_head(n = 10)
+}
+
+
+```
+
+```{r}
+#| message: true
+#| warning: false
+#| echo: false
+
+set_primary_comtrade_key("31a18d94cdf04f13b9c8a59ef63110c2")
+
+
+
+get_COMTRADE_data_products <- function(REPORTER, FREQUENCY, FLOW){
+  df <- ct_get_data(
+    reporter = REPORTER,
+    partner = "World",
+    frequency = FREQUENCY,
+    commodity_code = "everything",
+    flow_direction = FLOW,
+    start_date = 2020,
+    end_date = 2030,
+    process = TRUE,
+    tidy_cols = TRUE,
+    primary_token = get_primary_comtrade_key()
+  )
+  df <-
+    df |>
+    filter(period == max(period, na.rm = TRUE),
+           cmd_desc != "All Commodities") |>
+    select(
+      Produit = cmd_desc,
+      Valeur_M_USD = primary_value,
+      Annee = period) |> 
+    mutate(Produit = str_extract(Produit, "^[^;,]+")) |> 
+    distinct(Produit, .keep_all = TRUE) |> 
+    mutate(Valeur_M_USD = round(Valeur_M_USD / 1e6, 1)) |>
+    arrange(desc(Valeur_M_USD)) |>
+    slice_head(n = 10) 
+}
+cmr <- get_COMTRADE_data_products("CMR", "A", "Export")
+
 ```
 
 ```{r}
 #| message: false
 #| warning: false
 #| echo: false
+
 Import_Pop <- function(x) {
   name <- paste("pop_", x)
   name <- wb_data(
@@ -180,6 +259,7 @@ nettoyer_df <- function(df, nom_indic) {
 }
 ```
 
+
 # Préambule
 
 Ce document se veut être un rapport détaillant les différentes économies de la CEMAC, proposant à la fois des informations géographiques élémentaires et les dernières données économiques disponibles. Une brève analyse de ces données est également présentée afin de les remettre en perspective.
@@ -199,6 +279,9 @@ L'entièreté des analyses a été réalisée sur R et les différentes bases de
 
 Fiche_Cameroun <- Fiche_Pays("CMR", "Yaoundé", Import_Pop("CMR"), "475 442", Import_Dens("CMR"), "Français, Anglais", "Paul Biya (1982- )", "11 août 1960")
 Fiche_Cameroun
+
+exportations_cmr <- get_COMTRADE_data_partners("CMR", NULL, "A", 1, 0)
+importations_cmr <- get_COMTRADE_data_partners("CMR", NULL, "A", 0,1, 2023, 2023)
 ```
 
 ## République Centrafricaine
@@ -520,5 +603,6 @@ ggplot(PIB_HAB_SERIE_MOY, aes(x = Annee, y = PIB_Hab)) +
     y = "PIB/hab (USD)"
   ) +
   transition_reveal(Annee)
+
 ```
 
