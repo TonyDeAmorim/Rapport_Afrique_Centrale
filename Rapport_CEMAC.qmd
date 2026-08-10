@@ -26,6 +26,9 @@ library(htmltools)
 library(ggthemes)
 library(gganimate)
 library(comtradr)
+
+set_primary_comtrade_key("31a18d94cdf04f13b9c8a59ef63110c2")
+
 ```
 
 ```{r}
@@ -107,7 +110,6 @@ dict_sitc_fr <- tribble(
 #| warning: false
 #| echo: false
 
-set_primary_comtrade_key("31a18d94cdf04f13b9c8a59ef63110c2")
 
 
 get_COMTRADE_data_partners <- function(REPORTER, PARTNER, FREQUENCY, FLOW){
@@ -123,6 +125,16 @@ get_COMTRADE_data_partners <- function(REPORTER, PARTNER, FREQUENCY, FLOW){
     tidy_cols = TRUE,
     primary_token = get_primary_comtrade_key()
   )
+  if (is.null(df) || nrow(df) == 0) {
+    message(paste("Attention : Aucune donnée disponible pour", REPORTER))
+    return(
+      tibble(
+        Partenaire = "Aucune donnée disponible",
+        Valeur_M_USD = 0,
+        Annee = "N/A"
+      )
+    )
+  }
   df <-
     df |>
     filter(period == max(period, na.rm = TRUE)) |> 
@@ -162,6 +174,16 @@ get_COMTRADE_data_products <- function(REPORTER, FREQUENCY, FLOW){
     tidy_cols = TRUE,
     primary_token = get_primary_comtrade_key()
   )
+  if (is.null(df) || nrow(df) == 0) {
+    message(paste("Attention : Aucune donnée disponible pour", REPORTER))
+    return(
+      tibble(
+        Partenaire = "Aucune donnée disponible",
+        Valeur_M_USD = 0,
+        Annee = "N/A"
+      )
+    )
+  }
   df <-
     df |>
     filter(period == max(period, na.rm = TRUE),
@@ -179,9 +201,31 @@ get_COMTRADE_data_products <- function(REPORTER, FREQUENCY, FLOW){
     arrange(desc(Valeur_M_USD)) |>
     slice_head(n = 10)
 }
-cmr <- get_COMTRADE_data_products("CMR", "A", "Export")
 
 ```
+
+```{r}
+creer_table_top10 <- function(df, titre_base, label_col1) {
+  annee <- unique(df$Annee)[1]
+  df_prep <- df |>
+    select(-Annee) |>
+    rename(!!label_col1 := 1)
+  kable(
+    df_prep,
+    caption = paste0("<div style='text-align: center; font-size: 16px; margin-bottom: 8px;'><b>", titre_base, " — ", annee, "</b></div>"),
+    col.names = c(label_col1, "Valeur (M$ USD)"),
+    align = c("l", "r"),
+    format.args = list(big.mark = " ", decimal.mark = ",")
+  ) |>
+    kable_styling(
+      bootstrap_options = c("striped", "hover", "condensed"),
+      full_width = FALSE,
+      position = "center"
+    ) |>
+    row_spec(0, bold = TRUE, background = "#f8f9fa")
+}
+```
+
 
 ```{r}
 #| message: false
@@ -346,7 +390,8 @@ L'entièreté des analyses a été réalisée sur R et les différentes bases de
 
 # Fiches info géographique et démographique
 
-::: {.panel-tabset group="Cameroun"}
+::: {.panel-tabset}
+
 ## Cameroun
 
 ```{r}
@@ -356,12 +401,78 @@ L'entièreté des analyses a été réalisée sur R et les différentes bases de
 #| echo: false
 
 Fiche_Cameroun <- Fiche_Pays("CMR", "Yaoundé", Import_Pop("CMR"), "475 442", Import_Dens("CMR"), "Français, Anglais", "Paul Biya (1982- )", "11 août 1960")
-Fiche_Cameroun
 
-exportations_cmr <- get_COMTRADE_data_partners("CMR", NULL, "A", 1, 0)
-importations_cmr <- get_COMTRADE_data_partners("CMR", NULL, "A", 0,1, 2023, 2023)
+partners_exportations_cmr <- get_COMTRADE_data_partners("CMR", NULL, "A", "Export")
+partners_importations_cmr <- get_COMTRADE_data_partners("CMR", NULL, "A", "Import")
+product_importations_cmr <- get_COMTRADE_data_products("CMR", "A", "Import")
+product_exportations_cmr <- get_COMTRADE_data_products("CMR", "A", "Export")
+
+# --- PARTENAIRES ---
+tbl_partenaires_exp_cmr <- creer_table_top10(
+  partners_exportations_cmr, 
+  titre_base = "Top 10 des Partenaires à l'Exportation", 
+  label_col1 = "Pays Partenaire"
+)
+
+tbl_partenaires_imp_cmr <- creer_table_top10(
+  partners_importations_cmr, 
+  titre_base = "Top 10 des Partenaires à l'Importation", 
+  label_col1 = "Pays Partenaire"
+)
+
+# --- PRODUITS ---
+tbl_produit_exp_cmr <- creer_table_top10(
+  product_exportations_cmr, 
+  titre_base = "Top 10 des Produits Exportés", 
+  label_col1 = "Catégorie de Produit"
+)
+
+tbl_produit_imp_cmr <- creer_table_top10(
+  product_importations_cmr, 
+  titre_base = "Top 10 des Produits Importés", 
+  label_col1 = "Catégorie de Produit"
+)
 ```
 
+::: {.panel-tabset}
+
+### 📋 Profil Général
+
+```{r}
+#| echo: false
+# Affichage de la fiche pays
+Fiche_Cameroun
+```
+
+### 🤝 Partenaires Commerciaux
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_partenaires_exp_cmr
+```
+
+```{r}
+#| echo: false
+tbl_partenaires_imp_cmr
+```
+:::
+
+### 📦 Produits Échangés
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_produit_exp_cmr
+```
+
+```{r}
+#| echo: false
+tbl_produit_imp_cmr
+```
+:::
+
+:::
 ## République Centrafricaine
 
 ```{r}
@@ -371,9 +482,79 @@ importations_cmr <- get_COMTRADE_data_partners("CMR", NULL, "A", 0,1, 2023, 2023
 #| echo: false
 
 Fiche_CF <- Fiche_Pays("CF", "Bangui", Import_Pop("CF"), "622 984", Import_Dens("CF"), "Français, Sango", "Faustin-Archange Touadéra (2016- )", "13 août 1960")
+
+
+partners_exportations_caf <- get_COMTRADE_data_partners("CAF", NULL, "A", "Export")
+partners_importations_caf <- get_COMTRADE_data_partners("CAF", NULL, "A", "Import")
+product_importations_caf <- get_COMTRADE_data_products("CAF", "A", "Import")
+product_exportations_caf <- get_COMTRADE_data_products("CAF", "A", "Export")
+
+# --- PARTENAIRES ---
+tbl_partenaires_exp_caf <- creer_table_top10(
+  partners_exportations_caf, 
+  titre_base = "Top 10 des Partenaires à l'Exportation", 
+  label_col1 = "Pays Partenaire"
+)
+
+tbl_partenaires_imp_caf <- creer_table_top10(
+  partners_importations_caf, 
+  titre_base = "Top 10 des Partenaires à l'Importation", 
+  label_col1 = "Pays Partenaire"
+)
+
+# --- PRODUITS ---
+tbl_produit_exp_caf <- creer_table_top10(
+  product_exportations_caf, 
+  titre_base = "Top 10 des Produits Exportés", 
+  label_col1 = "Catégorie de Produit"
+)
+
+tbl_produit_imp_caf <- creer_table_top10(
+  product_importations_caf, 
+  titre_base = "Top 10 des Produits Importés", 
+  label_col1 = "Catégorie de Produit"
+)
+```
+
+::: {.panel-tabset}
+
+### 📋 Profil Général
+
+```{r}
+#| echo: false
+# Affichage de la fiche pays
 Fiche_CF
 ```
 
+### 🤝 Partenaires Commerciaux
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_partenaires_exp_caf
+```
+
+```{r}
+#| echo: false
+tbl_partenaires_imp_caf
+```
+:::
+
+### 📦 Produits Échangés
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_produit_exp_caf
+```
+
+```{r}
+#| echo: false
+tbl_produit_imp_caf
+```
+:::
+
+:::
 
 ## République du Congo
 
@@ -385,7 +566,78 @@ Fiche_CF
 
 Fiche_CG <- Fiche_Pays("CG", "Brazzaville", Import_Pop("CG"), "342 000", Import_Dens("CG"), "Français", "Denis Sassou-Nguesso (1997- )", "12 août 1960")
 Fiche_CG
+
+partners_exportations_cog <- get_COMTRADE_data_partners("COG", NULL, "A", "Export")
+partners_importations_cog <- get_COMTRADE_data_partners("COG", NULL, "A", "Import")
+product_importations_cog <- get_COMTRADE_data_products("COG", "A", "Import")
+product_exportations_cog <- get_COMTRADE_data_products("COG", "A", "Export")
+
+# --- PARTENAIRES ---
+tbl_partenaires_exp_cog <- creer_table_top10(
+  partners_exportations_cog, 
+  titre_base = "Top 10 des Partenaires à l'Exportation", 
+  label_col1 = "Pays Partenaire"
+)
+
+tbl_partenaires_imp_cog <- creer_table_top10(
+  partners_importations_cog, 
+  titre_base = "Top 10 des Partenaires à l'Importation", 
+  label_col1 = "Pays Partenaire"
+)
+
+# --- PRODUITS ---
+tbl_produit_exp_cog <- creer_table_top10(
+  product_exportations_cog, 
+  titre_base = "Top 10 des Produits Exportés", 
+  label_col1 = "Catégorie de Produit"
+)
+
+tbl_produit_imp_cog <- creer_table_top10(
+  product_importations_cog, 
+  titre_base = "Top 10 des Produits Importés", 
+  label_col1 = "Catégorie de Produit"
+)
 ```
+
+::: {.panel-tabset}
+
+### 📋 Profil Général
+
+```{r}
+#| echo: false
+# Affichage de la fiche pays
+Fiche_CG
+```
+
+### 🤝 Partenaires Commerciaux
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_partenaires_exp_cog
+```
+
+```{r}
+#| echo: false
+tbl_partenaires_imp_cog
+```
+:::
+
+### 📦 Produits Échangés
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_produit_exp_cog
+```
+
+```{r}
+#| echo: false
+tbl_produit_imp_cog
+```
+:::
+
+:::
 
 ## Gabon
 
@@ -396,8 +648,79 @@ Fiche_CG
 #| echo: false
 
 Fiche_GA <- Fiche_Pays("GA", "Libreville", Import_Pop("GA"), "267 667", Import_Dens("GA"), "Français", "Brice Clotaire Oligui Nguema (2023- )", "17 août 1960")
+
+
+partners_exportations_gab <- get_COMTRADE_data_partners("GAB", NULL, "A", "Export")
+partners_importations_gab <- get_COMTRADE_data_partners("GAB", NULL, "A", "Import")
+product_importations_gab <- get_COMTRADE_data_products("GAB", "A", "Import")
+product_exportations_gab <- get_COMTRADE_data_products("GAB", "A", "Export")
+
+# --- PARTENAIRES ---
+tbl_partenaires_exp_gab <- creer_table_top10(
+  partners_exportations_gab, 
+  titre_base = "Top 10 des Partenaires à l'Exportation", 
+  label_col1 = "Pays Partenaire"
+)
+
+tbl_partenaires_imp_gab <- creer_table_top10(
+  partners_importations_gab, 
+  titre_base = "Top 10 des Partenaires à l'Importation", 
+  label_col1 = "Pays Partenaire"
+)
+
+# --- PRODUITS ---
+tbl_produit_exp_gab <- creer_table_top10(
+  product_exportations_gab, 
+  titre_base = "Top 10 des Produits Exportés", 
+  label_col1 = "Catégorie de Produit"
+)
+
+tbl_produit_imp_gab <- creer_table_top10(
+  product_importations_gab, 
+  titre_base = "Top 10 des Produits Importés", 
+  label_col1 = "Catégorie de Produit"
+)
+```
+
+::: {.panel-tabset}
+
+### 📋 Profil Général
+
+```{r}
+#| echo: false
+# Affichage de la fiche pays
 Fiche_GA
 ```
+
+### 🤝 Partenaires Commerciaux
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_partenaires_exp_gab
+```
+
+```{r}
+#| echo: false
+tbl_partenaires_imp_gab
+```
+:::
+
+### 📦 Produits Échangés
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_produit_exp_gab
+```
+
+```{r}
+#| echo: false
+tbl_produit_imp_gab
+```
+:::
+
+:::
 
 ## Guinée équatoriale
 
@@ -409,8 +732,79 @@ Fiche_GA
 
 
 Fiche_GQ <- Fiche_Pays("GQ", "Ciudad de la Paz", Import_Pop("GQ"), "28,051", Import_Dens("GQ"), "Français, Espagnole, Portugais", "Teodoro Obiang Nguema Mbasogo (1982 - )", "12 octobre 1968")
+
+
+partners_exportations_gnq <- get_COMTRADE_data_partners("GNQ", NULL, "A", "Export")
+partners_importations_gnq <- get_COMTRADE_data_partners("GNQ", NULL, "A", "Import")
+product_importations_gnq <- get_COMTRADE_data_products("GNQ", "A", "Import")
+product_exportations_gnq <- get_COMTRADE_data_products("GNQ", "A", "Export")
+
+# --- PARTENAIRES ---
+tbl_partenaires_exp_gnq <- creer_table_top10(
+  partners_exportations_gnq, 
+  titre_base = "Top 10 des Partenaires à l'Exportation", 
+  label_col1 = "Pays Partenaire"
+)
+
+tbl_partenaires_imp_gnq <- creer_table_top10(
+  partners_importations_gnq, 
+  titre_base = "Top 10 des Partenaires à l'Importation", 
+  label_col1 = "Pays Partenaire"
+)
+
+# --- PRODUITS ---
+tbl_produit_exp_gnq <- creer_table_top10(
+  product_exportations_gnq, 
+  titre_base = "Top 10 des Produits Exportés", 
+  label_col1 = "Catégorie de Produit"
+)
+
+tbl_produit_imp_gnq <- creer_table_top10(
+  product_importations_gnq, 
+  titre_base = "Top 10 des Produits Importés", 
+  label_col1 = "Catégorie de Produit"
+)
+```
+
+::: {.panel-tabset}
+
+### 📋 Profil Général
+
+```{r}
+#| echo: false
+# Affichage de la fiche pays
 Fiche_GQ
 ```
+
+### 🤝 Partenaires Commerciaux
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_partenaires_exp_gnq
+```
+
+```{r}
+#| echo: false
+tbl_partenaires_imp_gnq
+```
+:::
+
+### 📦 Produits Échangés
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_produit_exp_gnq
+```
+
+```{r}
+#| echo: false
+tbl_produit_imp_gnq
+```
+:::
+
+:::
 
 ## République Démocratique du Congo
 
@@ -421,8 +815,78 @@ Fiche_GQ
 #| echo: false
 
 Fiche_COD <- Fiche_Pays("COD", "Kinshasa", Import_Pop("COD"), "2 345 410", Import_Dens("COD"), "Français", "Félix Tshisekedi (2019 - )", "30 juin 1960")
+
+partners_exportations_cod <- get_COMTRADE_data_partners("COD", NULL, "A", "Export")
+partners_importations_cod <- get_COMTRADE_data_partners("COD", NULL, "A", "Import")
+product_importations_cod <- get_COMTRADE_data_products("COD", "A", "Import")
+product_exportations_cod <- get_COMTRADE_data_products("COD", "A", "Export")
+
+# --- PARTENAIRES ---
+tbl_partenaires_exp_cod <- creer_table_top10(
+  partners_exportations_cod, 
+  titre_base = "Top 10 des Partenaires à l'Exportation", 
+  label_col1 = "Pays Partenaire"
+)
+
+tbl_partenaires_imp_cod <- creer_table_top10(
+  partners_importations_cod, 
+  titre_base = "Top 10 des Partenaires à l'Importation", 
+  label_col1 = "Pays Partenaire"
+)
+
+# --- PRODUITS ---
+tbl_produit_exp_cod <- creer_table_top10(
+  product_exportations_cod, 
+  titre_base = "Top 10 des Produits Exportés", 
+  label_col1 = "Catégorie de Produit"
+)
+
+tbl_produit_imp_cod <- creer_table_top10(
+  product_importations_cod, 
+  titre_base = "Top 10 des Produits Importés", 
+  label_col1 = "Catégorie de Produit"
+)
+```
+
+::: {.panel-tabset}
+
+### 📋 Profil Général
+
+```{r}
+#| echo: false
+# Affichage de la fiche pays
 Fiche_COD
 ```
+
+### 🤝 Partenaires Commerciaux
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_partenaires_exp_cod
+```
+
+```{r}
+#| echo: false
+tbl_partenaires_imp_cod
+```
+:::
+
+### 📦 Produits Échangés
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_produit_exp_cod
+```
+
+```{r}
+#| echo: false
+tbl_produit_imp_cod
+```
+:::
+
+:::
 
 ## Sao Tomé-et-Principe
 
@@ -436,8 +900,78 @@ Fiche_ST <- Fiche_Pays("ST", "São Tomé", Import_Pop("ST"), "1 001", Import_Den
   footnote(
     general = "Pays non-membre CEMAC"
   )
+
+partners_exportations_stp <- get_COMTRADE_data_partners("STP", NULL, "A", "Export")
+partners_importations_stp <- get_COMTRADE_data_partners("STP", NULL, "A", "Import")
+product_importations_stp <- get_COMTRADE_data_products("STP", "A", "Import")
+product_exportations_stp <- get_COMTRADE_data_products("STP", "A", "Export")
+
+# --- PARTENAIRES ---
+tbl_partenaires_exp_stp <- creer_table_top10(
+  partners_exportations_stp, 
+  titre_base = "Top 10 des Partenaires à l'Exportation", 
+  label_col1 = "Pays Partenaire"
+)
+
+tbl_partenaires_imp_stp <- creer_table_top10(
+  partners_importations_stp, 
+  titre_base = "Top 10 des Partenaires à l'Importation", 
+  label_col1 = "Pays Partenaire"
+)
+
+# --- PRODUITS ---
+tbl_produit_exp_stp <- creer_table_top10(
+  product_exportations_stp, 
+  titre_base = "Top 10 des Produits Exportés", 
+  label_col1 = "Catégorie de Produit"
+)
+
+tbl_produit_imp_stp <- creer_table_top10(
+  product_importations_stp, 
+  titre_base = "Top 10 des Produits Importés", 
+  label_col1 = "Catégorie de Produit"
+)
+```
+
+::: {.panel-tabset}
+
+### 📋 Profil Général
+
+```{r}
+#| echo: false
+# Affichage de la fiche pays
 Fiche_ST
 ```
+
+### 🤝 Partenaires Commerciaux
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_partenaires_exp_stp
+```
+
+```{r}
+#| echo: false
+tbl_partenaires_imp_stp
+```
+:::
+
+### 📦 Produits Échangés
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_produit_exp_stp
+```
+
+```{r}
+#| echo: false
+tbl_produit_imp_stp
+```
+:::
+
+:::
 
 ## Tchad
 
@@ -448,10 +982,79 @@ Fiche_ST
 #| echo: false
 
 Fiche_Tchad <- Fiche_Pays("TD", "N'Djamena", Import_Pop("TD"), "1 284 000", Import_Dens("TD"), "Français, Arabe", "Mahamat Déby (2024- )", "11 août 1960")
+
+partners_exportations_tcd <- get_COMTRADE_data_partners("TCD", NULL, "A", "Export")
+partners_importations_tcd <- get_COMTRADE_data_partners("TCD", NULL, "A", "Import")
+product_importations_tcd <- get_COMTRADE_data_products("TCD", "A", "Import")
+product_exportations_tcd <- get_COMTRADE_data_products("TCD", "A", "Export")
+
+# --- PARTENAIRES ---
+tbl_partenaires_exp_tcd <- creer_table_top10(
+  partners_exportations_tcd, 
+  titre_base = "Top 10 des Partenaires à l'Exportation", 
+  label_col1 = "Pays Partenaire"
+)
+
+tbl_partenaires_imp_tcd <- creer_table_top10(
+  partners_importations_tcd, 
+  titre_base = "Top 10 des Partenaires à l'Importation", 
+  label_col1 = "Pays Partenaire"
+)
+
+# --- PRODUITS ---
+tbl_produit_exp_tcd <- creer_table_top10(
+  product_exportations_tcd, 
+  titre_base = "Top 10 des Produits Exportés", 
+  label_col1 = "Catégorie de Produit"
+)
+
+tbl_produit_imp_tcd <- creer_table_top10(
+  product_importations_tcd, 
+  titre_base = "Top 10 des Produits Importés", 
+  label_col1 = "Catégorie de Produit"
+)
+
+```
+
+::: {.panel-tabset}
+
+### 📋 Profil Général
+
+```{r}
+#| echo: false
+# Affichage de la fiche pays
 Fiche_Tchad
 ```
 
+### 🤝 Partenaires Commerciaux
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_partenaires_exp_tcd
+```
+
+```{r}
+#| echo: false
+tbl_partenaires_imp_tcd
+```
 :::
+
+### 📦 Produits Échangés
+
+::: {layout-ncol=2}
+```{r}
+#| echo: false
+tbl_produit_exp_tcd
+```
+
+```{r}
+#| echo: false
+tbl_produit_imp_tcd
+```
+
+:::
+
 *Source : Banque Mondiale (WDI).*
 
 # Bilan économique
@@ -462,7 +1065,7 @@ Fiche_Tchad
 #| message: false
 #| warning: false
 
-Nom_Pays <- c("Cameroun", "Centrafrique", "Congo", "Gabon", "Guinée Equ.", "RDC", "São Tomé", "Tchad")
+Nom_Pays <- c("Cameroun", "Centrafrique", "Congo", "gnqon", "Guinée Equ.", "RDC", "São Tomé", "Tchad")
 Liste_Pays <- c("CMR", "CF", "CG", "GA", "GQ", "COD", "ST", "TD")
 Liste_Pays_ISO3 <- c("CMR", "CAF", "COG", "GAB", "GNQ", "COD", "STP", "TCD")
 table_correspondance <- tibble(
