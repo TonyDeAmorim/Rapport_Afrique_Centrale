@@ -29,6 +29,80 @@ library(comtradr)
 ```
 
 ```{r}
+#| label: Conversion et traduction codes douaniers
+#| echo: false
+#| message: true
+#| warning: false
+
+dict_sitc_fr <- tribble(
+  ~cmd_code, ~Produit_FR,
+  "00", "Animaux vivants",
+  "01", "Viandes & Préparations",
+  "02", "Produits laitiers & Œufs",
+  "03", "Poissons & Crustacés",
+  "04", "Céréales (Blé, Riz)",
+  "05", "Fruits & Légumes",
+  "06", "Sucres & Préparations",
+  "07", "Café, Cacao, Thé & Épices",
+  "08", "Nourriture pour animaux",
+  "09", "Produits alimentaires divers",
+  "11", "Boissons",
+  "12", "Tabacs",
+  "21", "Cuirs & Peaux",
+  "22", "Graines oléagineuses",
+  "23", "Caoutchouc brut",
+  "24", "Bois & Liège",
+  "25", "Pâte à papier",
+  "26", "Fibres textiles (Coton)",
+  "27", "Engrais bruts & Minéraux",
+  "28", "Minerais métalliques",
+  "29", "Matières brutes d'origine animale/végétale",
+  "32", "Houille & Charbon",
+  "33", "Pétrole & Produits pétroliers",
+  "34", "Gaz naturel & Gaz manufacturés",
+  "35", "Énergie électrique",
+  "41", "Huiles d'origine animale",
+  "42", "Huiles végétales (Palme, etc.)",
+  "51", "Produits chimiques organiques",
+  "52", "Produits chimiques inorganiques",
+  "53", "Produits tannants & Colorants",
+  "54", "Produits pharmaceutiques",
+  "55", "Huiles essentielles & Parfumerie",
+  "56", "Engrais manufacturés",
+  "57", "Matières plastiques",
+  "61", "Articles en cuir",
+  "62", "Articles en caoutchouc (Pneus)",
+  "63", "Articles en bois",
+  "64", "Papier & Carton",
+  "65", "Fils & Tissus textiles",
+  "66", "Produits minéraux non métalliques (Ciment)",
+  "67", "Fer & Acier",
+  "68", "Métaux non ferreux (Aluminium, Cuivre)",
+  "69", "Ouvrages en métaux",
+  "71", "Machines génératrices & Moteurs",
+  "72", "Machines spécialisées (Agriculture, BTP)",
+  "73", "Machines pour le travail des métaux",
+  "74", "Machines & Appareils industriels",
+  "75", "Matériel informatique & Bureautique",
+  "76", "Télécommunications & Équipements son",
+  "77", "Appareils électriques & Composants",
+  "78", "Véhicules automobiles",
+  "79", "Aéronefs & Bateaux",
+  "81", "Constructions préfabriquées & Sanitaires",
+  "82", "Meubles & Literie",
+  "83", "Articles de voyage (Sacs, Valises)",
+  "84", "Vêtements & Habillement",
+  "85", "Chaussures",
+  "87", "Instruments de précision & Médicaux",
+  "88", "Appareils photographiques & Horlogerie",
+  "89", "Articles manufacturés divers",
+  "93", "Transactions spéciales & Non classées",
+  "97", "Or non monétaire"
+)
+```
+
+
+```{r}
 #| message: true
 #| warning: false
 #| echo: false
@@ -78,6 +152,7 @@ get_COMTRADE_data_products <- function(REPORTER, FREQUENCY, FLOW){
   df <- ct_get_data(
     reporter = REPORTER,
     partner = "World",
+    commodity_classification = "S4",
     frequency = FREQUENCY,
     commodity_code = "everything",
     flow_direction = FLOW,
@@ -90,16 +165,19 @@ get_COMTRADE_data_products <- function(REPORTER, FREQUENCY, FLOW){
   df <-
     df |>
     filter(period == max(period, na.rm = TRUE),
-           cmd_desc != "All Commodities") |>
-    select(
-      Produit = cmd_desc,
-      Valeur_M_USD = primary_value,
-      Annee = period) |> 
-    mutate(Produit = str_extract(Produit, "^[^;,]+")) |> 
-    distinct(Produit, .keep_all = TRUE) |> 
-    mutate(Valeur_M_USD = round(Valeur_M_USD / 1e6, 1)) |>
+           cmd_desc != "All Commodities",
+           nchar(cmd_code) == 2) |>
+    mutate(cmd_code = str_pad(as.character(cmd_code), width = 2, pad = "0")) |>
+    left_join(dict_sitc_fr, by = "cmd_code") |>
+    mutate(
+      Produit = coalesce(Produit_FR, str_extract(cmd_desc, "^[^;,]+")),
+      Valeur_M_USD = round(primary_value / 1e6, 1),
+      Annee = period
+    ) |>
+    select(Produit, Valeur_M_USD, Annee) |>
+    distinct(Produit, .keep_all = TRUE) |>
     arrange(desc(Valeur_M_USD)) |>
-    slice_head(n = 10) 
+    slice_head(n = 10)
 }
 cmr <- get_COMTRADE_data_products("CMR", "A", "Export")
 
