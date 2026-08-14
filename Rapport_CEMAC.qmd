@@ -38,6 +38,25 @@ set_primary_comtrade_key(Sys.getenv("COMTRADE_PRIMARY"))
 ```
 
 ```{r}
+#| label: Setting liste pays
+#| echo: false
+#| message: true
+#| warning: false
+
+Nom_Pays <- c("Cameroun", "Centrafrique", "Congo", "Gabon", "Guinée Equ.", "RDC", "São Tomé", "Tchad")
+Liste_Pays <- c("CMR", "CF", "CG", "GA", "GQ", "COD", "ST", "TD")
+Liste_Pays_ISO3 <- c("CMR", "CAF", "COG", "GAB", "GNQ", "COD", "STP", "TCD")
+table_correspondance_ISO <- tibble(
+  Pays_ISO = Liste_Pays_ISO3,
+  Pays = Liste_Pays
+)
+table_correspondance <- tibble(
+  Pays_ISO = Liste_Pays_ISO3,
+  Pays = Nom_Pays
+)
+```
+
+```{r}
 #| label: Conversion et traduction codes douaniers
 #| echo: false
 #| message: true
@@ -124,7 +143,7 @@ codes_S4_2digits <-
   filter(nchar(id) == 2) |>
   pull(id)
 
-partners_cemac_raw <- ct_get_data(
+partners_cemac <- ct_get_data(
   reporter = reporters,
   partner = "all_countries",
   frequency = "A",
@@ -138,7 +157,8 @@ partners_cemac_raw <- ct_get_data(
   cache = TRUE
 )
 
-partners_cemac <- partners_cemac_raw |>
+partners_cemac <- 
+  partners_cemac |>
   filter(period == max(period, na.rm = TRUE),
          partner_desc != "World") |>
   select(Reporter = reporter_iso, Flow = flow_desc,
@@ -146,7 +166,7 @@ partners_cemac <- partners_cemac_raw |>
          Annee = period) |>
   mutate(Valeur_M_USD = round(Valeur_M_USD / 1e6, 1))
 
-products_cemac_raw <- ct_get_data(
+products_cemac <- ct_get_data(
   reporter = reporters,
   partner = "World",
   commodity_classification = "S4",
@@ -161,7 +181,8 @@ products_cemac_raw <- ct_get_data(
   cache = TRUE
 )
 
-products_cemac <- products_cemac_raw |>
+products_cemac <- 
+  products_cemac |>
   filter(period == max(period, na.rm = TRUE),
          cmd_desc != "All Commodities") |>
   mutate(cmd_code = str_pad(as.character(cmd_code), width = 2, pad = "0")) |>
@@ -224,29 +245,24 @@ creer_table_top10 <- function(df, titre_base, label_col1) {
 #| echo: false
 
 Fiche_Pays <- function(ISO, CAP, POP, SUP, DENS, LG, PRES, IND) {
-  df <- paste("Fiche_", ISO)
   df <-
     tibble(
       Capitale = CAP,
-      Population = Import_Pop(ISO),
+      Population = POP,
       "Superficie (km²)" = SUP,
       "Densité (hab/km²)" = DENS,
       "Langue(s) officielle(s)" = LG,
       Président = PRES,
       "Fête Nationale" = IND
     )
-  df <-
-    df |>
+  df |>
     pivot_longer(
       cols = everything(),
       names_to = "Indicateur",
       values_to = "Valeur"
     ) |>
-    kable(
-      col.names = c("", "")
-    ) |>
+    kable(col.names = c("", "")) |>
     kable_styling(full_width = FALSE) |>
-    column_spec(1, bold = TRUE) |>
     column_spec(1, bold = TRUE, width = "40%") |>
     column_spec(2, width = "60%")
 }
@@ -258,71 +274,74 @@ Fiche_Pays <- function(ISO, CAP, POP, SUP, DENS, LG, PRES, IND) {
 #| warning: false
 #| echo: false
 
-indic_cemac_raw <-
-  wb_data(
-  indicator = c("SP.POP.TOTL", "EN.POP.DNST"),
-  country   = reporters,
-  mrnev     = 1
-)
+pop_raw <- wb_data(indicator = "SP.POP.TOTL", country = reporters, mrnev = 1) |>
+  select(iso3c, SP.POP.TOTL, date_pop = date)
 
-indic_cemac <- indic_cemac_raw |>
+dens_raw <- wb_data(indicator = "EN.POP.DNST", country = reporters, mrnev = 1) |>
+  select(iso3c, EN.POP.DNST, date_dens = date)
+
+indic_cemac <- pop_raw |>
+  left_join(dens_raw, by = "iso3c") |>
   mutate(
-    Pop_formate  = paste0(format(round(SP.POP.TOTL / 1e6, 2), nsmall = 2), " M (", date, ")"),
-    Dens_formate = paste0(round(EN.POP.DNST, 2), " (", date, ")")
+    Pop_formate  = paste0(format(round(SP.POP.TOTL / 1e6, 2), nsmall = 2), " M (", date_pop, ")"),
+    Dens_formate = paste0(round(EN.POP.DNST, 2), " (", date_dens, ")")
   ) |>
   select(Reporter = iso3c, Pop_formate, Dens_formate)
 
-Import_pop <- function(pays){
+Import_Pop <- function(pays){
   indic_cemac |> filter(Reporter == pays) |> pull(Pop_formate)
 }
-
-Import_dens <- function(pays){
+Import_Dens <- function(pays){
   indic_cemac |> filter(Reporter == pays) |> pull(Dens_formate)
 }
 ```
 
-
 ```{r}
-#| message: false
-#| warning: false
+#| label: Fonction import datat WB
 #| echo: false
+#| message: true
+#| warning: false
 
-Import_ECON_data <- function(WB_CODE, PAYS, EXP, ROUND) {
-  df <- wb_data(
-    indicator = WB_CODE,
-    country = PAYS,
-    mrv = 1
-  )
+Import_ECON_data <- function(WB_CODE, PAYS_VEC, EXP, ROUND) {
+  df <- wb_data(indicator = WB_CODE, country = PAYS_VEC, mrnev = 1)
   tibble(
-    Pays = PAYS,
-    valeur = round(df[[WB_CODE]] / (10^EXP), ROUND),
-    annee = as.numeric(df$date)
+    Pays_ISO = df$iso2c,   
+    valeur   = round(df[[WB_CODE]] / (10^EXP), ROUND),
+    annee    = as.numeric(df$date)
   )
 }
+
 ```
 
 ```{r}
+#| label: Import data WEO
+#| echo: false
 #| message: false
 #| warning: false
-#| echo: false
 
-Import_WEO <- function(ISO, REF, EXP, ROUND) {
+Import_WEO <- function(ISO_VEC, REF, EXP, ROUND) {
   ref <- "IMF.RES,WEO"
-  filter <- paste0(ISO, ".", REF)
+  filter <- paste0(paste(ISO_VEC, collapse = "+"), ".", REF)
   capture.output(dataset <- as.data.frame(suppressMessages(readSDMX(
     providerId = "IMF_DATA",
     resource = "data",
     flowRef = ref,
     key = filter
   ))))
-  dataset <-
-    dataset |>
+  dataset |>
     mutate(TIME_PERIOD = as.numeric(TIME_PERIOD)) |>
     filter(TIME_PERIOD <= 2026, !is.na(OBS_VALUE)) |>
+    group_by(COUNTRY) |>                      
     slice_max(order_by = TIME_PERIOD, n = 1) |>
-    select(TIME_PERIOD, OBS_VALUE) |>
-    mutate(OBS_VALUE = round(as.numeric(OBS_VALUE) / (10^EXP), ROUND))
+    ungroup() |>
+    transmute(
+      Pays_ISO = COUNTRY,
+      annee    = TIME_PERIOD,
+      valeur   = round(as.numeric(OBS_VALUE) / (10^EXP), ROUND)
+    )
 }
+
+
 ```
 
 ```{r}
@@ -415,7 +434,6 @@ tbl_produit_imp_cmr <- creer_table_top10(
 Fiche_Cameroun
 ```
 
-
 ### 🤝 Partenaires Commerciaux
 
 ::: {layout-ncol="2"}
@@ -453,7 +471,7 @@ tbl_produit_imp_cmr
 #| warning: false
 #| echo: false
 
-Fiche_CF <- Fiche_Pays("CF", "Bangui", Import_Pop("CF"), "622 984", Import_Dens("CF"), "Français, Sango", "Faustin-Archange Touadéra (2016- )", "13 août 1960")
+Fiche_CF <- Fiche_Pays("CAF", "Bangui", Import_Pop("CAF"), "622 984", Import_Dens("CAF"), "Français, Sango", "Faustin-Archange Touadéra (2016- )", "13 août 1960")
 
 
 # --- PARTENAIRES ---
@@ -494,12 +512,12 @@ Fiche_CF
 ::: {layout-ncol="2"}
 ```{r}
 #| echo: false
-tbl_partenaires_exp_caf
+tbl_partenaires_exp_CAF
 ```
 
 ```{r}
 #| echo: false
-tbl_partenaires_imp_caf
+tbl_partenaires_imp_CAF
 ```
 :::
 
@@ -508,12 +526,12 @@ tbl_partenaires_imp_caf
 ::: {layout-ncol="2"}
 ```{r}
 #| echo: false
-tbl_produit_exp_caf
+tbl_produit_exp_CAF
 ```
 
 ```{r}
 #| echo: false
-tbl_produit_imp_caf
+tbl_produit_imp_CAF
 ```
 :::
 :::::
@@ -526,36 +544,28 @@ tbl_produit_imp_caf
 #| warning: false
 #| echo: false
 
-Fiche_CG <- Fiche_Pays("CG", "Brazzaville", Import_Pop("CG"), "342 000", Import_Dens("CG"), "Français", "Denis Sassou-Nguesso (1997- )", "12 août 1960")
+Fiche_CG <- Fiche_Pays("COG", "Brazzaville", Import_Pop("COG"), "342 000", Import_Dens("COG"), "Français", "Denis Sassou-Nguesso (1997- )", "12 août 1960")
 Fiche_CG
 
-partners_exportations_cog <- get_COMTRADE_data_partners("COG", NULL, "A", "Export")
-partners_importations_cog <- get_COMTRADE_data_partners("COG", NULL, "A", "Import")
-product_importations_cog <- get_COMTRADE_data_products("COG", "A", "Import")
-product_exportations_cog <- get_COMTRADE_data_products("COG", "A", "Export")
-
 # --- PARTENAIRES ---
-tbl_partenaires_exp_cog <- creer_table_top10(
-  partners_exportations_cog, 
+tbl_partenaires_exp_COG <- creer_table_top10(
+  extraire_top10_partenaires("COG", "Export"), 
   titre_base = "Top 10 des Partenaires à l'Exportation", 
   label_col1 = "Pays Partenaire"
 )
-
-tbl_partenaires_imp_cog <- creer_table_top10(
-  partners_importations_cog, 
+tbl_partenaires_imp_COG <- creer_table_top10(
+  extraire_top10_partenaires("COG", "Import"), 
   titre_base = "Top 10 des Partenaires à l'Importation", 
   label_col1 = "Pays Partenaire"
 )
-
 # --- PRODUITS ---
-tbl_produit_exp_cog <- creer_table_top10(
-  product_exportations_cog, 
+tbl_produit_exp_COG <- creer_table_top10(
+  extraire_top10_produits("COG", "Export"), 
   titre_base = "Top 10 des Produits Exportés", 
   label_col1 = "Catégorie de Produit"
 )
-
-tbl_produit_imp_cog <- creer_table_top10(
-  product_importations_cog, 
+tbl_produit_imp_COG <- creer_table_top10(
+  extraire_top10_produits("COG", "Import"), 
   titre_base = "Top 10 des Produits Importés", 
   label_col1 = "Catégorie de Produit"
 )
@@ -575,12 +585,12 @@ Fiche_CG
 ::: {layout-ncol="2"}
 ```{r}
 #| echo: false
-tbl_partenaires_exp_cog
+tbl_partenaires_exp_COG
 ```
 
 ```{r}
 #| echo: false
-tbl_partenaires_imp_cog
+tbl_partenaires_imp_COG
 ```
 :::
 
@@ -589,12 +599,12 @@ tbl_partenaires_imp_cog
 ::: {layout-ncol="2"}
 ```{r}
 #| echo: false
-tbl_produit_exp_cog
+tbl_produit_exp_COG
 ```
 
 ```{r}
 #| echo: false
-tbl_produit_imp_cog
+tbl_produit_imp_COG
 ```
 :::
 :::::
@@ -607,36 +617,29 @@ tbl_produit_imp_cog
 #| warning: false
 #| echo: false
 
-Fiche_GA <- Fiche_Pays("GA", "Libreville", Import_Pop("GA"), "267 667", Import_Dens("GA"), "Français", "Brice Clotaire Oligui Nguema (2023- )", "17 août 1960")
+Fiche_GAB <- Fiche_Pays("GAB", "Libreville", Import_Pop("GAB"), "267 667", Import_Dens("GAB"), "Français", "Brice Clotaire Oligui Nguema (2023- )", "17 août 1960")
 
 
-partners_exportations_gab <- get_COMTRADE_data_partners("GAB", NULL, "A", "Export")
-partners_importations_gab <- get_COMTRADE_data_partners("GAB", NULL, "A", "Import")
-product_importations_gab <- get_COMTRADE_data_products("GAB", "A", "Import")
-product_exportations_gab <- get_COMTRADE_data_products("GAB", "A", "Export")
 
 # --- PARTENAIRES ---
-tbl_partenaires_exp_gab <- creer_table_top10(
-  partners_exportations_gab, 
+tbl_partenaires_exp_GAB <- creer_table_top10(
+  extraire_top10_partenaires("GAB", "Export"), 
   titre_base = "Top 10 des Partenaires à l'Exportation", 
   label_col1 = "Pays Partenaire"
 )
-
-tbl_partenaires_imp_gab <- creer_table_top10(
-  partners_importations_gab, 
+tbl_partenaires_imp_GAB <- creer_table_top10(
+  extraire_top10_partenaires("GAB", "Import"), 
   titre_base = "Top 10 des Partenaires à l'Importation", 
   label_col1 = "Pays Partenaire"
 )
-
 # --- PRODUITS ---
-tbl_produit_exp_gab <- creer_table_top10(
-  product_exportations_gab, 
+tbl_produit_exp_GAB <- creer_table_top10(
+  extraire_top10_produits("GAB", "Export"), 
   titre_base = "Top 10 des Produits Exportés", 
   label_col1 = "Catégorie de Produit"
 )
-
-tbl_produit_imp_gab <- creer_table_top10(
-  product_importations_gab, 
+tbl_produit_imp_GAB <- creer_table_top10(
+  extraire_top10_produits("GAB", "Import"), 
   titre_base = "Top 10 des Produits Importés", 
   label_col1 = "Catégorie de Produit"
 )
@@ -648,7 +651,7 @@ tbl_produit_imp_gab <- creer_table_top10(
 ```{r}
 #| echo: false
 # Affichage de la fiche pays
-Fiche_GA
+Fiche_GAB
 ```
 
 ### 🤝 Partenaires Commerciaux
@@ -656,12 +659,12 @@ Fiche_GA
 ::: {layout-ncol="2"}
 ```{r}
 #| echo: false
-tbl_partenaires_exp_gab
+tbl_partenaires_exp_GAB
 ```
 
 ```{r}
 #| echo: false
-tbl_partenaires_imp_gab
+tbl_partenaires_imp_GAB
 ```
 :::
 
@@ -670,12 +673,12 @@ tbl_partenaires_imp_gab
 ::: {layout-ncol="2"}
 ```{r}
 #| echo: false
-tbl_produit_exp_gab
+tbl_produit_exp_GAB
 ```
 
 ```{r}
 #| echo: false
-tbl_produit_imp_gab
+tbl_produit_imp_GAB
 ```
 :::
 :::::
@@ -689,10 +692,10 @@ tbl_produit_imp_gab
 #| echo: false
 
 
-Fiche_GQ <- Fiche_Pays("GQ", "Ciudad de la Paz", Import_Pop("GQ"), "28,051", Import_Dens("GQ"), "Français, Espagnole, Portugais", "Teodoro Obiang Nguema Mbasogo (1982 - )", "12 octobre 1968")
+Fiche_GQ <- Fiche_Pays("GNQ", "Ciudad de la Paz", Import_Pop("GNQ"), "28,051", Import_Dens("GNQ"), "Français, Espagnole, Portugais", "Teodoro Obiang Nguema Mbasogo (1982 - )", "12 octobre 1968")
 ```
 
-::: panel-tabset
+::::: panel-tabset
 ### 📋 Profil Général
 
 ```{r}
@@ -702,7 +705,7 @@ Fiche_GQ <- Fiche_Pays("GQ", "Ciudad de la Paz", Import_Pop("GQ"), "28,051", Imp
 
 Fiche_GQ
 ```
-:::
+:::::
 
 ## République Démocratique du Congo
 
@@ -714,33 +717,26 @@ Fiche_GQ
 
 Fiche_COD <- Fiche_Pays("COD", "Kinshasa", Import_Pop("COD"), "2 345 410", Import_Dens("COD"), "Français", "Félix Tshisekedi (2019 - )", "30 juin 1960")
 
-partners_exportations_cod <- get_COMTRADE_data_partners("COD", NULL, "A", "Export")
-partners_importations_cod <- get_COMTRADE_data_partners("COD", NULL, "A", "Import")
-product_importations_cod <- get_COMTRADE_data_products("COD", "A", "Import")
-product_exportations_cod <- get_COMTRADE_data_products("COD", "A", "Export")
 
 # --- PARTENAIRES ---
-tbl_partenaires_exp_cod <- creer_table_top10(
-  partners_exportations_cod, 
+tbl_partenaires_exp_COD <- creer_table_top10(
+  extraire_top10_partenaires("COD", "Export"), 
   titre_base = "Top 10 des Partenaires à l'Exportation", 
   label_col1 = "Pays Partenaire"
 )
-
-tbl_partenaires_imp_cod <- creer_table_top10(
-  partners_importations_cod, 
+tbl_partenaires_imp_COD <- creer_table_top10(
+  extraire_top10_partenaires("COD", "Import"), 
   titre_base = "Top 10 des Partenaires à l'Importation", 
   label_col1 = "Pays Partenaire"
 )
-
 # --- PRODUITS ---
-tbl_produit_exp_cod <- creer_table_top10(
-  product_exportations_cod, 
+tbl_produit_exp_COD <- creer_table_top10(
+  extraire_top10_produits("COD", "Export"), 
   titre_base = "Top 10 des Produits Exportés", 
   label_col1 = "Catégorie de Produit"
 )
-
-tbl_produit_imp_cod <- creer_table_top10(
-  product_importations_cod, 
+tbl_produit_imp_COD <- creer_table_top10(
+  extraire_top10_produits("COD", "Import"), 
   titre_base = "Top 10 des Produits Importés", 
   label_col1 = "Catégorie de Produit"
 )
@@ -760,12 +756,12 @@ Fiche_COD
 ::: {layout-ncol="2"}
 ```{r}
 #| echo: false
-tbl_partenaires_exp_cod
+tbl_partenaires_exp_COD
 ```
 
 ```{r}
 #| echo: false
-tbl_partenaires_imp_cod
+tbl_partenaires_imp_COD
 ```
 :::
 
@@ -774,12 +770,12 @@ tbl_partenaires_imp_cod
 ::: {layout-ncol="2"}
 ```{r}
 #| echo: false
-tbl_produit_exp_cod
+tbl_produit_exp_COD
 ```
 
 ```{r}
 #| echo: false
-tbl_produit_imp_cod
+tbl_produit_imp_COD
 ```
 :::
 :::::
@@ -792,50 +788,43 @@ tbl_produit_imp_cod
 #| warning: false
 #| echo: false
 
-Fiche_ST <- Fiche_Pays("ST", "São Tomé", Import_Pop("ST"), "1 001", Import_Dens("ST"), "Portugais", "Carlos Vila Nova (2021 - )", "12 juillet 1975") |>
+Fiche_STP <- Fiche_Pays("STP", "São Tomé", Import_Pop("STP"), "1 001", Import_Dens("STP"), "Portugais", "Carlos Vila Nova (2021 - )", "12 juillet 1975") |>
   footnote(
     general = "Pays non-membre CEMAC"
   )
 
-partners_exportations_stp <- get_COMTRADE_data_partners("STP", NULL, "A", "Export")
-partners_importations_stp <- get_COMTRADE_data_partners("STP", NULL, "A", "Import")
-product_importations_stp <- get_COMTRADE_data_products("STP", "A", "Import")
-product_exportations_stp <- get_COMTRADE_data_products("STP", "A", "Export")
 
 # --- PARTENAIRES ---
-tbl_partenaires_exp_stp <- creer_table_top10(
-  partners_exportations_stp, 
+tbl_partenaires_exp_STP <- creer_table_top10(
+  extraire_top10_partenaires("STP", "Export"), 
   titre_base = "Top 10 des Partenaires à l'Exportation", 
   label_col1 = "Pays Partenaire"
 )
-
-tbl_partenaires_imp_stp <- creer_table_top10(
-  partners_importations_stp, 
+tbl_partenaires_imp_STP <- creer_table_top10(
+  extraire_top10_partenaires("STP", "Import"), 
   titre_base = "Top 10 des Partenaires à l'Importation", 
   label_col1 = "Pays Partenaire"
 )
-
 # --- PRODUITS ---
-tbl_produit_exp_stp <- creer_table_top10(
-  product_exportations_stp, 
+tbl_produit_exp_STP <- creer_table_top10(
+  extraire_top10_produits("STP", "Export"), 
   titre_base = "Top 10 des Produits Exportés", 
   label_col1 = "Catégorie de Produit"
 )
-
-tbl_produit_imp_stp <- creer_table_top10(
-  product_importations_stp, 
+tbl_produit_imp_STP <- creer_table_top10(
+  extraire_top10_produits("STP", "Import"), 
   titre_base = "Top 10 des Produits Importés", 
   label_col1 = "Catégorie de Produit"
 )
 ```
 
-:::::: panel-tabset
+::::: panel-tabset
 ### 📋 Profil Général
 
 ```{r}
 #| echo: false
 # Affichage de la fiche pays
-Fiche_ST
+Fiche_STP
 ```
 
 ### 🤝 Partenaires Commerciaux
@@ -843,12 +832,12 @@ Fiche_ST
 ::: {layout-ncol="2"}
 ```{r}
 #| echo: false
-tbl_partenaires_exp_stp
+tbl_partenaires_exp_STP
 ```
 
 ```{r}
 #| echo: false
-tbl_partenaires_imp_stp
+tbl_partenaires_imp_STP
 ```
 :::
 
@@ -857,14 +846,15 @@ tbl_partenaires_imp_stp
 ::: {layout-ncol="2"}
 ```{r}
 #| echo: false
-tbl_produit_exp_stp
+tbl_produit_exp_STP
 ```
 
 ```{r}
 #| echo: false
-tbl_produit_imp_stp
+tbl_produit_imp_STP
 ```
 :::
+:::::
 
 ## Tchad
 
@@ -874,10 +864,10 @@ tbl_produit_imp_stp
 #| warning: false
 #| echo: false
 
-Fiche_Tchad <- Fiche_Pays("TD", "N'Djamena", Import_Pop("TD"), "1 284 000", Import_Dens("TD"), "Français, Arabe", "Mahamat Déby (2024- )", "11 août 1960")
+Fiche_Tchad <- Fiche_Pays("TCD", "N'Djamena", Import_Pop("TCD"), "1 284 000", Import_Dens("TCD"), "Français, Arabe", "Mahamat Déby (2024- )", "11 août 1960")
 ```
 
-::: panel-tabset
+::::: panel-tabset
 ### 📋 Profil Général
 
 ```{r}
@@ -887,8 +877,8 @@ Fiche_Tchad <- Fiche_Pays("TD", "N'Djamena", Import_Pop("TD"), "1 284 000", Impo
 
 Fiche_Tchad
 ```
-:::
-::::::
+:::::
+:::::::::::::::::::::::
 
 *Source : Banque Mondiale (WDI).*
 
@@ -900,56 +890,15 @@ Fiche_Tchad
 #| message: false
 #| warning: false
 
-Nom_Pays <- c("Cameroun", "Centrafrique", "Congo", "Gabon", "Guinée Equ.", "RDC", "São Tomé", "Tchad")
-Liste_Pays <- c("CMR", "CF", "CG", "GA", "GQ", "COD", "ST", "TD")
-Liste_Pays_ISO3 <- c("CMR", "CAF", "COG", "GAB", "GNQ", "COD", "STP", "TCD")
-table_correspondance <- tibble(
-  Pays_ISO = Liste_Pays_ISO3,
-  Pays = Liste_Pays
-)
-
-PIB_PAYS <- map_df(
-  Liste_Pays,
-  \(p) Import_ECON_data("NY.GDP.MKTP.CD", p, 9, 3)
-)
-
-PIB_GROWTH_PAYS <- map_df(
-  Liste_Pays,
-  \(p) Import_ECON_data("NY.GDP.MKTP.KD.ZG", p, 0, 1)
-)
-
-INFLATION_PAYS <- map_df(
-  Liste_Pays,
-  \(p) Import_ECON_data("FP.CPI.TOTL.ZG", p, 0, 1)
-)
-
-IDE_PAYS <- map_df(
-  Liste_Pays,
-  \(p) Import_ECON_data("BX.KLT.DINV.WD.GD.ZS", p, 0, 1)
-)
-
-DETTE_PAYS <- map_df(
-  Liste_Pays_ISO3,
-  \(p) Import_WEO(p, "GGXWDG_NGDP", 0, 2)
-) |>
-  mutate(Pays = Liste_Pays) |>
-  relocate(Pays)
-
-PIB_HAB_PAYS <- map_df(Liste_Pays_ISO3, \(p) Import_WEO(p, "NGDPDPC", 0, 0)) |>
-  mutate(Pays = Liste_Pays) |>
-  relocate(Pays)
-
-SOLDE_BUDGET_PAYS <- map_df(Liste_Pays_ISO3, \(p) Import_WEO(p, "GGXCNL_NGDP", 0, 2)) |>
-  mutate(Pays = Liste_Pays) |>
-  relocate(Pays)
-
-COMPTE_COURANT_PAYS <- map_df(Liste_Pays_ISO3, \(p) Import_WEO(p, "BCA_NGDPD", 0, 2)) |>
-  mutate(Pays = Liste_Pays) |>
-  relocate(Pays)
-
-DEPENSES_PUB_PAYS <- map_df(Liste_Pays_ISO3, \(p) Import_WEO(p, "GGX_NGDP", 0, 2)) |>
-  mutate(Pays = Liste_Pays) |>
-  relocate(Pays)
+PIB_PAYS        <- Import_ECON_data("NY.GDP.MKTP.CD",       Liste_Pays_ISO3, 9, 3)
+PIB_GROWTH_PAYS <- Import_ECON_data("NY.GDP.MKTP.KD.ZG",    Liste_Pays_ISO3, 0, 1)
+INFLATION_PAYS  <- Import_ECON_data("FP.CPI.TOTL.ZG",       Liste_Pays_ISO3, 0, 1)
+IDE_PAYS        <- Import_ECON_data("BX.KLT.DINV.WD.GD.ZS", Liste_Pays_ISO3, 0, 1)
+DETTE_PAYS          <- Import_WEO(Liste_Pays_ISO3, "GGXWDG_NGDP", 0, 2)
+PIB_HAB_PAYS         <- Import_WEO(Liste_Pays_ISO3, "NGDPDPC",     0, 0)
+SOLDE_BUDGET_PAYS    <- Import_WEO(Liste_Pays_ISO3, "GGXCNL_NGDP", 0, 2)
+COMPTE_COURANT_PAYS  <- Import_WEO(Liste_Pays_ISO3, "BCA_NGDPD",   0, 2)
+DEPENSES_PUB_PAYS    <- Import_WEO(Liste_Pays_ISO3, "GGX_NGDP",    0, 2)
 ```
 
 ```{r}
@@ -1119,6 +1068,4 @@ ggplot(PIB_HAB_SERIE_MOY, aes(x = Annee, y = PIB_Hab)) +
   transition_reveal(Annee)
 
 ```
-:::::::::::::::::::::::
 
-[^1]: ème
