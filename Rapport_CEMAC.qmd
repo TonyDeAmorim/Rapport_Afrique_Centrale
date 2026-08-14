@@ -6,13 +6,21 @@ format:
     page-layout: full
 ---
 
+# Préambule
+
+Ce document se veut être un rapport détaillant les différentes économies de la CEMAC, proposant à la fois des informations géographiques élémentaires et les dernières données économiques disponibles. Une brève analyse de ces données est également présentée afin de les remettre en perspective.
+
+L'entièreté des analyses a été réalisée sur R et les différentes bases de données usitées sont mentionnées en sources.
+
 ```{r}
-#| label: Library Imports
+#| label: Library Imports and api keys setting
 #| message: false
 #| warning: false
 #| echo: false
 
 library(ggplot2)
+library(ggthemes)
+library(gganimate)
 library(tidyverse)
 library(knitr)
 library(WDI)
@@ -23,11 +31,9 @@ library(kableExtra)
 library(rsdmx)
 library(DT)
 library(htmltools)
-library(ggthemes)
-library(gganimate)
 library(comtradr)
 
-set_primary_comtrade_key("31a18d94cdf04f13b9c8a59ef63110c2")
+set_primary_comtrade_key(Sys.getenv("COMTRADE_PRIMARY"))
 
 ```
 
@@ -37,7 +43,7 @@ set_primary_comtrade_key("31a18d94cdf04f13b9c8a59ef63110c2")
 #| message: true
 #| warning: false
 
-dict_sitc_fr <- tribble(
+Code_douaniers_fr <- tribble(
   ~cmd_code, ~Produit_FR,
   "00", "Animaux vivants",
   "01", "Viandes & Préparations",
@@ -104,107 +110,93 @@ dict_sitc_fr <- tribble(
 )
 ```
 
-
 ```{r}
-#| message: true
+#| label: Recuperation donnees COMTRADE
+#| message: false
 #| warning: false
 #| echo: false
 
+reporters <- c("CMR", "CAF", "COG", "GAB", "COD", "STP")
 
 
-get_COMTRADE_data_partners <- function(REPORTER, PARTNER, FREQUENCY, FLOW){
-  df <- ct_get_data(
-    reporter = REPORTER,
-    partner = PARTNER,
-    frequency = FREQUENCY ,
-    type = "goods",
-    flow_direction = FLOW,
-    start_date = 2020,
-    end_date = 2030,
-    process = TRUE,
-    tidy_cols = TRUE,
-    primary_token = get_primary_comtrade_key()
-  )
-  if (is.null(df) || nrow(df) == 0) {
-    message(paste("Attention : Aucune donnée disponible pour", REPORTER))
-    return(
-      tibble(
-        Partenaire = "Aucune donnée disponible",
-        Valeur_M_USD = 0,
-        Annee = "N/A"
-      )
-    )
-  }
-  df <-
-    df |>
-    filter(period == max(period, na.rm = TRUE)) |> 
-    select(
-      Partenaire = partner_desc,
-      Valeur_M_USD = primary_value,
-      Annee = period) |> 
-    filter(Partenaire != "World") |> 
-    mutate(Valeur_M_USD = round(Valeur_M_USD / 1e6, 1)) |>
+codes_S4_2digits <- 
+  ct_get_ref_table(dataset_id = "S4") |>
+  filter(nchar(id) == 2) |>
+  pull(id)
+
+partners_cemac_raw <- ct_get_data(
+  reporter = reporters,
+  partner = "all_countries",
+  frequency = "A",
+  type = "goods",
+  flow_direction = c("Import", "Export"),
+  start_date = 2023 - 1,
+  end_date   = 2023,
+  process = TRUE,
+  tidy_cols = TRUE,
+  primary_token = "31a18d94cdf04f13b9c8a59ef63110c2",
+  cache = TRUE
+)
+
+partners_cemac <- partners_cemac_raw |>
+  filter(period == max(period, na.rm = TRUE),
+         partner_desc != "World") |>
+  select(Reporter = reporter_iso, Flow = flow_desc,
+         Partenaire = partner_desc, Valeur_M_USD = primary_value,
+         Annee = period) |>
+  mutate(Valeur_M_USD = round(Valeur_M_USD / 1e6, 1))
+
+products_cemac_raw <- ct_get_data(
+  reporter = reporters,
+  partner = "World",
+  commodity_classification = "S4",
+  frequency = "A",
+  commodity_code = codes_S4_2digits,
+  flow_direction = c("Import", "Export"),
+  start_date = 2023 - 1,
+  end_date   = 2023,
+  process = TRUE,
+  tidy_cols = TRUE,
+  primary_token = "31a18d94cdf04f13b9c8a59ef63110c2",
+  cache = TRUE
+)
+
+products_cemac <- products_cemac_raw |>
+  filter(period == max(period, na.rm = TRUE),
+         cmd_desc != "All Commodities") |>
+  mutate(cmd_code = str_pad(as.character(cmd_code), width = 2, pad = "0")) |>
+  left_join(Code_douaniers_fr, by = "cmd_code") |>
+  mutate(
+    Produit = coalesce(Produit_FR, str_extract(cmd_desc, "^[^;,]+")),
+    Valeur_M_USD = round(primary_value / 1e6, 1),
+    Annee = period
+  ) |>
+  select(Reporter = reporter_iso, Flow = flow_desc, Produit, Valeur_M_USD, Annee) |>
+  distinct(Reporter, Flow, Produit, .keep_all = TRUE)
+
+extraire_top10_partenaires <- function(pays, flow){
+  partners_cemac |>
+    filter(Reporter == pays, Flow == flow) |>
+    select(-Reporter, -Flow) |>
     arrange(desc(Valeur_M_USD)) |>
     slice_head(n = 10)
 }
 
-
-```
-
-```{r}
-#| message: true
-#| warning: false
-#| echo: false
-
-set_primary_comtrade_key("31a18d94cdf04f13b9c8a59ef63110c2")
-
-
-
-get_COMTRADE_data_products <- function(REPORTER, FREQUENCY, FLOW){
-  df <- ct_get_data(
-    reporter = REPORTER,
-    partner = "World",
-    commodity_classification = "S4",
-    frequency = FREQUENCY,
-    commodity_code = "everything",
-    flow_direction = FLOW,
-    start_date = 2020,
-    end_date = 2030,
-    process = TRUE,
-    tidy_cols = TRUE,
-    primary_token = get_primary_comtrade_key()
-  )
-  if (is.null(df) || nrow(df) == 0) {
-    message(paste("Attention : Aucune donnée disponible pour", REPORTER))
-    return(
-      tibble(
-        Partenaire = "Aucune donnée disponible",
-        Valeur_M_USD = 0,
-        Annee = "N/A"
-      )
-    )
-  }
-  df <-
-    df |>
-    filter(period == max(period, na.rm = TRUE),
-           cmd_desc != "All Commodities",
-           nchar(cmd_code) == 2) |>
-    mutate(cmd_code = str_pad(as.character(cmd_code), width = 2, pad = "0")) |>
-    left_join(dict_sitc_fr, by = "cmd_code") |>
-    mutate(
-      Produit = coalesce(Produit_FR, str_extract(cmd_desc, "^[^;,]+")),
-      Valeur_M_USD = round(primary_value / 1e6, 1),
-      Annee = period
-    ) |>
-    select(Produit, Valeur_M_USD, Annee) |>
-    distinct(Produit, .keep_all = TRUE) |>
+extraire_top10_produits <- function(pays, flow){
+  products_cemac |>
+    filter(Reporter == pays, Flow == flow) |>
+    select(-Reporter, -Flow) |>
     arrange(desc(Valeur_M_USD)) |>
     slice_head(n = 10)
 }
-
 ```
 
 ```{r}
+#| label: Fonction créer tableau top 10
+#| echo: false
+#| message: true
+#| warning: false
+
 creer_table_top10 <- function(df, titre_base, label_col1) {
   annee <- unique(df$Annee)[1]
   df_prep <- df |>
@@ -212,7 +204,7 @@ creer_table_top10 <- function(df, titre_base, label_col1) {
     rename(!!label_col1 := 1)
   kable(
     df_prep,
-    caption = paste0("<div style='text-align: center; font-size: 16px; margin-bottom: 8px;'><b>", titre_base, " — ", annee, "</b></div>"),
+    caption = paste0("<div style='text-align: center; font-size: 16px; margin-bottom: 8px;'><b>", titre_base, " - ", annee, "</b></div>"),
     col.names = c(label_col1, "Valeur (M$ USD)"),
     align = c("l", "r"),
     format.args = list(big.mark = " ", decimal.mark = ",")
@@ -223,38 +215,6 @@ creer_table_top10 <- function(df, titre_base, label_col1) {
       position = "center"
     ) |>
     row_spec(0, bold = TRUE, background = "#f8f9fa")
-}
-```
-
-
-```{r}
-#| message: false
-#| warning: false
-#| echo: false
-
-Import_Pop <- function(x) {
-  name <- paste("pop_", x)
-  name <- wb_data(
-    indicator = "SP.POP.TOTL",
-    country = x,
-    mrv = 1
-  )
-  name <- paste0(format(round(name$SP.POP.TOTL / 1e6, 2), nsmall = 2), "M (", name$date, ")")
-}
-```
-
-```{r}
-#| message: false
-#| warning: false
-#| echo: false
-
-Import_Dens <- function(x) {
-  name <- wb_data(
-    indicator = "EN.POP.DNST",
-    country = x,
-    mrv = 1
-  )
-  name <- paste(round(name$EN.POP.DNST, 2), "(", name$date, ")")
 }
 ```
 
@@ -291,6 +251,36 @@ Fiche_Pays <- function(ISO, CAP, POP, SUP, DENS, LG, PRES, IND) {
     column_spec(2, width = "60%")
 }
 ```
+
+```{r}
+#| label: Recuperation population et densite zone CEMAC
+#| message: false
+#| warning: false
+#| echo: false
+
+indic_cemac_raw <-
+  wb_data(
+  indicator = c("SP.POP.TOTL", "EN.POP.DNST"),
+  country   = reporters,
+  mrnev     = 1
+)
+
+indic_cemac <- indic_cemac_raw |>
+  mutate(
+    Pop_formate  = paste0(format(round(SP.POP.TOTL / 1e6, 2), nsmall = 2), " M (", date, ")"),
+    Dens_formate = paste0(round(EN.POP.DNST, 2), " (", date, ")")
+  ) |>
+  select(Reporter = iso3c, Pop_formate, Dens_formate)
+
+Import_pop <- function(pays){
+  indic_cemac |> filter(Reporter == pays) |> pull(Pop_formate)
+}
+
+Import_dens <- function(pays){
+  indic_cemac |> filter(Reporter == pays) |> pull(Dens_formate)
+}
+```
+
 
 ```{r}
 #| message: false
@@ -335,7 +325,6 @@ Import_WEO <- function(ISO, REF, EXP, ROUND) {
 }
 ```
 
-
 ```{r}
 #| message: false
 #| warning: false
@@ -362,7 +351,6 @@ Import_WEO_Time_Series <- function(ISO, REF, EXP, ROUND) {
 }
 ```
 
-
 ```{r}
 #| message: false
 #| warning: false
@@ -381,17 +369,9 @@ nettoyer_df <- function(df, nom_indic) {
 }
 ```
 
-
-# Préambule
-
-Ce document se veut être un rapport détaillant les différentes économies de la CEMAC, proposant à la fois des informations géographiques élémentaires et les dernières données économiques disponibles. Une brève analyse de ces données est également présentée afin de les remettre en perspective.
-
-L'entièreté des analyses a été réalisée sur R et les différentes bases de données usitées sont mentionnées en sources.
-
 # Fiches info géographique et démographique
 
-::: {.panel-tabset}
-
+::::::::::::::::::::::: panel-tabset
 ## Cameroun
 
 ```{r}
@@ -402,40 +382,31 @@ L'entièreté des analyses a été réalisée sur R et les différentes bases de
 
 Fiche_Cameroun <- Fiche_Pays("CMR", "Yaoundé", Import_Pop("CMR"), "475 442", Import_Dens("CMR"), "Français, Anglais", "Paul Biya (1982- )", "11 août 1960")
 
-partners_exportations_cmr <- get_COMTRADE_data_partners("CMR", NULL, "A", "Export")
-partners_importations_cmr <- get_COMTRADE_data_partners("CMR", NULL, "A", "Import")
-product_importations_cmr <- get_COMTRADE_data_products("CMR", "A", "Import")
-product_exportations_cmr <- get_COMTRADE_data_products("CMR", "A", "Export")
-
 # --- PARTENAIRES ---
 tbl_partenaires_exp_cmr <- creer_table_top10(
-  partners_exportations_cmr, 
+  extraire_top10_partenaires("CMR", "Export"), 
   titre_base = "Top 10 des Partenaires à l'Exportation", 
   label_col1 = "Pays Partenaire"
 )
-
 tbl_partenaires_imp_cmr <- creer_table_top10(
-  partners_importations_cmr, 
+  extraire_top10_partenaires("CMR", "Import"), 
   titre_base = "Top 10 des Partenaires à l'Importation", 
   label_col1 = "Pays Partenaire"
 )
-
 # --- PRODUITS ---
 tbl_produit_exp_cmr <- creer_table_top10(
-  product_exportations_cmr, 
+  extraire_top10_produits("CMR", "Export"), 
   titre_base = "Top 10 des Produits Exportés", 
   label_col1 = "Catégorie de Produit"
 )
-
 tbl_produit_imp_cmr <- creer_table_top10(
-  product_importations_cmr, 
+  extraire_top10_produits("CMR", "Import"), 
   titre_base = "Top 10 des Produits Importés", 
   label_col1 = "Catégorie de Produit"
 )
 ```
 
-::: {.panel-tabset}
-
+::::: panel-tabset
 ### 📋 Profil Général
 
 ```{r}
@@ -444,9 +415,10 @@ tbl_produit_imp_cmr <- creer_table_top10(
 Fiche_Cameroun
 ```
 
+
 ### 🤝 Partenaires Commerciaux
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ```{r}
 #| echo: false
 tbl_partenaires_exp_cmr
@@ -460,7 +432,7 @@ tbl_partenaires_imp_cmr
 
 ### 📦 Produits Échangés
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ```{r}
 #| echo: false
 tbl_produit_exp_cmr
@@ -471,8 +443,8 @@ tbl_produit_exp_cmr
 tbl_produit_imp_cmr
 ```
 :::
+:::::
 
-:::
 ## République Centrafricaine
 
 ```{r}
@@ -484,40 +456,31 @@ tbl_produit_imp_cmr
 Fiche_CF <- Fiche_Pays("CF", "Bangui", Import_Pop("CF"), "622 984", Import_Dens("CF"), "Français, Sango", "Faustin-Archange Touadéra (2016- )", "13 août 1960")
 
 
-partners_exportations_caf <- get_COMTRADE_data_partners("CAF", NULL, "A", "Export")
-partners_importations_caf <- get_COMTRADE_data_partners("CAF", NULL, "A", "Import")
-product_importations_caf <- get_COMTRADE_data_products("CAF", "A", "Import")
-product_exportations_caf <- get_COMTRADE_data_products("CAF", "A", "Export")
-
 # --- PARTENAIRES ---
-tbl_partenaires_exp_caf <- creer_table_top10(
-  partners_exportations_caf, 
+tbl_partenaires_exp_CAF <- creer_table_top10(
+  extraire_top10_partenaires("CAF", "Export"), 
   titre_base = "Top 10 des Partenaires à l'Exportation", 
   label_col1 = "Pays Partenaire"
 )
-
-tbl_partenaires_imp_caf <- creer_table_top10(
-  partners_importations_caf, 
+tbl_partenaires_imp_CAF <- creer_table_top10(
+  extraire_top10_partenaires("CAF", "Import"), 
   titre_base = "Top 10 des Partenaires à l'Importation", 
   label_col1 = "Pays Partenaire"
 )
-
 # --- PRODUITS ---
-tbl_produit_exp_caf <- creer_table_top10(
-  product_exportations_caf, 
+tbl_produit_exp_CAF <- creer_table_top10(
+  extraire_top10_produits("CAF", "Export"), 
   titre_base = "Top 10 des Produits Exportés", 
   label_col1 = "Catégorie de Produit"
 )
-
-tbl_produit_imp_caf <- creer_table_top10(
-  product_importations_caf, 
+tbl_produit_imp_CAF <- creer_table_top10(
+  extraire_top10_produits("CAF", "Import"), 
   titre_base = "Top 10 des Produits Importés", 
   label_col1 = "Catégorie de Produit"
 )
 ```
 
-::: {.panel-tabset}
-
+::::: panel-tabset
 ### 📋 Profil Général
 
 ```{r}
@@ -528,7 +491,7 @@ Fiche_CF
 
 ### 🤝 Partenaires Commerciaux
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ```{r}
 #| echo: false
 tbl_partenaires_exp_caf
@@ -542,7 +505,7 @@ tbl_partenaires_imp_caf
 
 ### 📦 Produits Échangés
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ```{r}
 #| echo: false
 tbl_produit_exp_caf
@@ -553,8 +516,7 @@ tbl_produit_exp_caf
 tbl_produit_imp_caf
 ```
 :::
-
-:::
+:::::
 
 ## République du Congo
 
@@ -599,8 +561,7 @@ tbl_produit_imp_cog <- creer_table_top10(
 )
 ```
 
-::: {.panel-tabset}
-
+::::: panel-tabset
 ### 📋 Profil Général
 
 ```{r}
@@ -611,7 +572,7 @@ Fiche_CG
 
 ### 🤝 Partenaires Commerciaux
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ```{r}
 #| echo: false
 tbl_partenaires_exp_cog
@@ -625,7 +586,7 @@ tbl_partenaires_imp_cog
 
 ### 📦 Produits Échangés
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ```{r}
 #| echo: false
 tbl_produit_exp_cog
@@ -636,8 +597,7 @@ tbl_produit_exp_cog
 tbl_produit_imp_cog
 ```
 :::
-
-:::
+:::::
 
 ## Gabon
 
@@ -682,8 +642,7 @@ tbl_produit_imp_gab <- creer_table_top10(
 )
 ```
 
-::: {.panel-tabset}
-
+::::: panel-tabset
 ### 📋 Profil Général
 
 ```{r}
@@ -694,7 +653,7 @@ Fiche_GA
 
 ### 🤝 Partenaires Commerciaux
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ```{r}
 #| echo: false
 tbl_partenaires_exp_gab
@@ -708,7 +667,7 @@ tbl_partenaires_imp_gab
 
 ### 📦 Produits Échangés
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ```{r}
 #| echo: false
 tbl_produit_exp_gab
@@ -719,8 +678,7 @@ tbl_produit_exp_gab
 tbl_produit_imp_gab
 ```
 :::
-
-:::
+:::::
 
 ## Guinée équatoriale
 
@@ -732,78 +690,18 @@ tbl_produit_imp_gab
 
 
 Fiche_GQ <- Fiche_Pays("GQ", "Ciudad de la Paz", Import_Pop("GQ"), "28,051", Import_Dens("GQ"), "Français, Espagnole, Portugais", "Teodoro Obiang Nguema Mbasogo (1982 - )", "12 octobre 1968")
-
-
-partners_exportations_gnq <- get_COMTRADE_data_partners("GNQ", NULL, "A", "Export")
-partners_importations_gnq <- get_COMTRADE_data_partners("GNQ", NULL, "A", "Import")
-product_importations_gnq <- get_COMTRADE_data_products("GNQ", "A", "Import")
-product_exportations_gnq <- get_COMTRADE_data_products("GNQ", "A", "Export")
-
-# --- PARTENAIRES ---
-tbl_partenaires_exp_gnq <- creer_table_top10(
-  partners_exportations_gnq, 
-  titre_base = "Top 10 des Partenaires à l'Exportation", 
-  label_col1 = "Pays Partenaire"
-)
-
-tbl_partenaires_imp_gnq <- creer_table_top10(
-  partners_importations_gnq, 
-  titre_base = "Top 10 des Partenaires à l'Importation", 
-  label_col1 = "Pays Partenaire"
-)
-
-# --- PRODUITS ---
-tbl_produit_exp_gnq <- creer_table_top10(
-  product_exportations_gnq, 
-  titre_base = "Top 10 des Produits Exportés", 
-  label_col1 = "Catégorie de Produit"
-)
-
-tbl_produit_imp_gnq <- creer_table_top10(
-  product_importations_gnq, 
-  titre_base = "Top 10 des Produits Importés", 
-  label_col1 = "Catégorie de Produit"
-)
 ```
 
-::: {.panel-tabset}
-
+::: panel-tabset
 ### 📋 Profil Général
 
 ```{r}
+#| message: false
+#| warning: false
 #| echo: false
-# Affichage de la fiche pays
+
 Fiche_GQ
 ```
-
-### 🤝 Partenaires Commerciaux
-
-::: {layout-ncol=2}
-```{r}
-#| echo: false
-tbl_partenaires_exp_gnq
-```
-
-```{r}
-#| echo: false
-tbl_partenaires_imp_gnq
-```
-:::
-
-### 📦 Produits Échangés
-
-::: {layout-ncol=2}
-```{r}
-#| echo: false
-tbl_produit_exp_gnq
-```
-
-```{r}
-#| echo: false
-tbl_produit_imp_gnq
-```
-:::
-
 :::
 
 ## République Démocratique du Congo
@@ -848,8 +746,7 @@ tbl_produit_imp_cod <- creer_table_top10(
 )
 ```
 
-::: {.panel-tabset}
-
+::::: panel-tabset
 ### 📋 Profil Général
 
 ```{r}
@@ -860,7 +757,7 @@ Fiche_COD
 
 ### 🤝 Partenaires Commerciaux
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ```{r}
 #| echo: false
 tbl_partenaires_exp_cod
@@ -874,7 +771,7 @@ tbl_partenaires_imp_cod
 
 ### 📦 Produits Échangés
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ```{r}
 #| echo: false
 tbl_produit_exp_cod
@@ -885,8 +782,7 @@ tbl_produit_exp_cod
 tbl_produit_imp_cod
 ```
 :::
-
-:::
+:::::
 
 ## Sao Tomé-et-Principe
 
@@ -933,8 +829,7 @@ tbl_produit_imp_stp <- creer_table_top10(
 )
 ```
 
-::: {.panel-tabset}
-
+:::::: panel-tabset
 ### 📋 Profil Général
 
 ```{r}
@@ -945,7 +840,7 @@ Fiche_ST
 
 ### 🤝 Partenaires Commerciaux
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ```{r}
 #| echo: false
 tbl_partenaires_exp_stp
@@ -959,7 +854,7 @@ tbl_partenaires_imp_stp
 
 ### 📦 Produits Échangés
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ```{r}
 #| echo: false
 tbl_produit_exp_stp
@@ -971,8 +866,6 @@ tbl_produit_imp_stp
 ```
 :::
 
-:::
-
 ## Tchad
 
 ```{r}
@@ -982,78 +875,20 @@ tbl_produit_imp_stp
 #| echo: false
 
 Fiche_Tchad <- Fiche_Pays("TD", "N'Djamena", Import_Pop("TD"), "1 284 000", Import_Dens("TD"), "Français, Arabe", "Mahamat Déby (2024- )", "11 août 1960")
-
-partners_exportations_tcd <- get_COMTRADE_data_partners("TCD", NULL, "A", "Export")
-partners_importations_tcd <- get_COMTRADE_data_partners("TCD", NULL, "A", "Import")
-product_importations_tcd <- get_COMTRADE_data_products("TCD", "A", "Import")
-product_exportations_tcd <- get_COMTRADE_data_products("TCD", "A", "Export")
-
-# --- PARTENAIRES ---
-tbl_partenaires_exp_tcd <- creer_table_top10(
-  partners_exportations_tcd, 
-  titre_base = "Top 10 des Partenaires à l'Exportation", 
-  label_col1 = "Pays Partenaire"
-)
-
-tbl_partenaires_imp_tcd <- creer_table_top10(
-  partners_importations_tcd, 
-  titre_base = "Top 10 des Partenaires à l'Importation", 
-  label_col1 = "Pays Partenaire"
-)
-
-# --- PRODUITS ---
-tbl_produit_exp_tcd <- creer_table_top10(
-  product_exportations_tcd, 
-  titre_base = "Top 10 des Produits Exportés", 
-  label_col1 = "Catégorie de Produit"
-)
-
-tbl_produit_imp_tcd <- creer_table_top10(
-  product_importations_tcd, 
-  titre_base = "Top 10 des Produits Importés", 
-  label_col1 = "Catégorie de Produit"
-)
-
 ```
 
-::: {.panel-tabset}
-
+::: panel-tabset
 ### 📋 Profil Général
 
 ```{r}
+#| message: false
+#| warning: false
 #| echo: false
-# Affichage de la fiche pays
+
 Fiche_Tchad
 ```
-
-### 🤝 Partenaires Commerciaux
-
-::: {layout-ncol=2}
-```{r}
-#| echo: false
-tbl_partenaires_exp_tcd
-```
-
-```{r}
-#| echo: false
-tbl_partenaires_imp_tcd
-```
 :::
-
-### 📦 Produits Échangés
-
-::: {layout-ncol=2}
-```{r}
-#| echo: false
-tbl_produit_exp_tcd
-```
-
-```{r}
-#| echo: false
-tbl_produit_imp_tcd
-```
-
-:::
+::::::
 
 *Source : Banque Mondiale (WDI).*
 
@@ -1065,7 +900,7 @@ tbl_produit_imp_tcd
 #| message: false
 #| warning: false
 
-Nom_Pays <- c("Cameroun", "Centrafrique", "Congo", "gnqon", "Guinée Equ.", "RDC", "São Tomé", "Tchad")
+Nom_Pays <- c("Cameroun", "Centrafrique", "Congo", "Gabon", "Guinée Equ.", "RDC", "São Tomé", "Tchad")
 Liste_Pays <- c("CMR", "CF", "CG", "GA", "GQ", "COD", "ST", "TD")
 Liste_Pays_ISO3 <- c("CMR", "CAF", "COG", "GAB", "GNQ", "COD", "STP", "TCD")
 table_correspondance <- tibble(
@@ -1117,7 +952,6 @@ DEPENSES_PUB_PAYS <- map_df(Liste_Pays_ISO3, \(p) Import_WEO(p, "GGX_NGDP", 0, 2
   relocate(Pays)
 ```
 
-
 ```{r}
 #| label: Tableau des données
 #| echo: false
@@ -1166,7 +1000,7 @@ df_ECON_complet |>
     extensions = c('Buttons'),
     caption = tags$caption(
       style = 'caption-side: bottom; text-align: left; font-size: 0.85em; color: #555; padding-top: 8px;',
-      paste0("Années des données — ", texte_footnote, " | Source : Banque Mondiale & World Economic Outlook")
+      paste0("Années des données - ", texte_footnote, " | Source : Banque Mondiale & World Economic Outlook")
     ),
     options = list(
       dom = 'Bfrtip',                  
@@ -1180,7 +1014,7 @@ df_ECON_complet |>
   )
 ```
 
-Bilan économique de la zone CEMAC. 
+Bilan économique de la zone CEMAC.
 
 ```{r}
 #| label: Tableau des CEMAC
@@ -1205,7 +1039,6 @@ df_CEMAC <-
   bind_rows(df_CEMAC, Moyenne_CEMAC) |> 
   select(!starts_with("Yr"))
 ```
-
 
 ```{r}
 #| label: PIB CEMAC Plot
@@ -1286,4 +1119,6 @@ ggplot(PIB_HAB_SERIE_MOY, aes(x = Annee, y = PIB_Hab)) +
   transition_reveal(Annee)
 
 ```
+:::::::::::::::::::::::
 
+[^1]: ème
