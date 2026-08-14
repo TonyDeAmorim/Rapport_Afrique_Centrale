@@ -274,10 +274,10 @@ Fiche_Pays <- function(ISO, CAP, POP, SUP, DENS, LG, PRES, IND) {
 #| warning: false
 #| echo: false
 
-pop_raw <- wb_data(indicator = "SP.POP.TOTL", country = reporters, mrnev = 1) |>
+pop_raw <- wb_data(indicator = "SP.POP.TOTL", country = Liste_Pays_ISO3, mrnev = 1) |>
   select(iso3c, SP.POP.TOTL, date_pop = date)
 
-dens_raw <- wb_data(indicator = "EN.POP.DNST", country = reporters, mrnev = 1) |>
+dens_raw <- wb_data(indicator = "EN.POP.DNST", country = Liste_Pays_ISO3, mrnev = 1) |>
   select(iso3c, EN.POP.DNST, date_dens = date)
 
 indic_cemac <- pop_raw |>
@@ -545,7 +545,7 @@ tbl_produit_imp_CAF
 #| echo: false
 
 Fiche_CG <- Fiche_Pays("COG", "Brazzaville", Import_Pop("COG"), "342 000", Import_Dens("COG"), "Français", "Denis Sassou-Nguesso (1997- )", "12 août 1960")
-Fiche_CG
+
 
 # --- PARTENAIRES ---
 tbl_partenaires_exp_COG <- creer_table_top10(
