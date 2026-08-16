@@ -32,6 +32,9 @@ library(rsdmx)
 library(DT)
 library(htmltools)
 library(comtradr)
+library(readxl)
+library(scales)
+library(patchwork)
 
 set_primary_comtrade_key(Sys.getenv("COMTRADE_PRIMARY"))
 
@@ -351,19 +354,23 @@ Import_WEO <- function(ISO_VEC, REF, EXP, ROUND) {
 
 Import_WEO_Time_Series <- function(ISO, REF, EXP, ROUND) {
   ref <- "IMF.RES,WEO"
-  filter <- paste0(ISO, ".", REF)
+  filter <- paste0(paste(ISO, collapse = "+"), ".", REF)
+  
   capture.output(dataset <- as.data.frame(suppressMessages(readSDMX(
     providerId = "IMF_DATA",
     resource = "data",
     flowRef = ref,
     key = filter
   ))))
+  
+  col_pays <- intersect(c("COUNTRY", "REF_AREA"), names(dataset))[1]
+  
   dataset <-
     dataset |>
     mutate(TIME_PERIOD = as.numeric(TIME_PERIOD)) |>
     filter(TIME_PERIOD <= 2026, !is.na(OBS_VALUE)) |>
     transmute(
-      Pays_ISO = ISO,
+      Pays_ISO = .data[[col_pays]],
       annee = TIME_PERIOD,
       valeur = round(as.numeric(OBS_VALUE) / (10^EXP), ROUND)
     )
@@ -990,82 +997,200 @@ df_CEMAC <-
 ```
 
 ```{r}
-#| label: PIB CEMAC Plot
-#| echo: false
-#| message: false
-#| warning: false
-
-PIB_CEMAC <-
-  df_CEMAC |> 
-  select(Pays, `PIB (Mrd USD)`) |>
-  filter(Pays != "Moyenne") |> 
-  mutate(Pourcentage = round((`PIB (Mrd USD)` / sum(`PIB (Mrd USD)`)) * 100, 1),
-         Label = paste0(Pourcentage, "%"))
-
-PIB_CEMAC_Plot <- 
-  ggplot(PIB_CEMAC, aes(x ="", y = `PIB (Mrd USD)`, fill = Pays)) +
-  geom_col(width = 1, color = "white") +
-  coord_polar(theta = "y", start = 0) +
-  geom_text(
-    aes(label = Label),
-    position = position_stack(vjust = 0.5),
-    color = "white",
-    fontface = "bold"
-  ) +
-  scale_fill_brewer(palette = "Set2") +
-  theme_void() +
-  labs(
-    title = "Répartition par pays",
-    fill = ""
-  )
-  
-```
-
-```{r}
 #| label: PIB CEMAC Time Plot
 #| echo: false
 #| message: false
 #| warning: false
 
+
 PIB_HAB_SERIE <- 
-  map_df(Liste_Pays_ISO3, \(p) Import_WEO_Time_Series(p, "NGDPDPC", 0, 2)) |>
+  Import_WEO_Time_Series(c("CMR", "CAF", "COG", "GAB", "GNQ", "TCD"), "NGDPDPC", 0, 2) |>
   left_join(table_correspondance, by = "Pays_ISO") |>
   select(Pays, annee, valeur) |> 
   pivot_wider(
     names_from = annee,
     values_from = valeur
-  ) |> 
-  mutate(Pays = Nom_Pays) |> 
-  filter(Pays != "RDC", Pays != "São Tomé") 
+  ) 
 
-Moyenne <- 
-  PIB_HAB_SERIE |>
-  summarise(
-    Pays = "Moyenne",
-    across(where(is.numeric), ~ round(mean(.x, na.rm = TRUE), 2))
+PIB_HAB_SERIE_MOY <- PIB_HAB_SERIE |>
+  summarise(across(where(is.numeric), \(x) round(mean(x, na.rm = TRUE), 2))) |>
+  pivot_longer(
+    cols = everything(),
+    names_to = "Annee",
+    names_transform = as.numeric,
+    values_to = "PIB_Hab"
   )
 
-PIB_HAB_SERIE <- bind_rows(PIB_HAB_SERIE, Moyenne)
+Moyenne_wide <- PIB_HAB_SERIE_MOY |>
+  mutate(Pays = "Moyenne") |>
+  pivot_wider(names_from = Annee, values_from = PIB_Hab)
 
-PIB_HAB_SERIE_MOY <-
-  Moyenne |> 
-  pivot_longer(
-    cols = -Pays, 
-    names_to = "Annee", 
-    values_to = "PIB_Hab"
-  ) |> 
-  mutate(Annee = as.numeric(Annee))
+PIB_HAB_SERIE <- bind_rows(PIB_HAB_SERIE, Moyenne_wide)
 
 ggplot(PIB_HAB_SERIE_MOY, aes(x = Annee, y = PIB_Hab)) +
   geom_line(color = "#2b5c8f", linewidth = 1.2) +
-  geom_point(color = "#d9534f", size = 3) +
-  theme_minimal(base_size = 14) +
+  
+  theme_clean(base_size = 9) +
   labs(
     title = "Évolution du PIB moyen par habitant",
     x = "Année",
     y = "PIB/hab (USD)"
-  ) +
-  transition_reveal(Annee)
+  ) 
 
 ```
 
+# Relations Bilatérales
+
+```{r}
+#| label: Importation Data AFD
+#| echo: false
+#| message: false
+#| warning: false
+
+AFD_Afrq_Centrale <- read_excel("DataBase/AFD_Afrq_Centrale.xlsx")
+AFD_Afrq_Australe <- read_excel("DataBase/AFD_Afrq_Australe.xlsx")
+
+AFD_Afrq_Australe <-
+  AFD_Afrq_Australe |> 
+  filter(`Pays afd` == "SAO-TOME-ET-PRINCIPE")
+
+AFD_Afrq_Centrale <-
+  AFD_Afrq_Centrale |> 
+  filter(`Pays afd` %in% c("CAMEROUN", "CENTRAFRICAINE, REPUBLIQUE", "CONGO", "GABON")) 
+
+AFD_Afrq <- bind_rows(AFD_Afrq_Centrale, AFD_Afrq_Australe)
+
+AFD_Afrq <-
+  AFD_Afrq |> 
+  select(`Min année de signature`, `Transaction du projets par pays - Transaction`,
+         `Pays afd`, `Sous CICID`, Libellé) |>
+  rename(Pays = `Pays afd`,
+         Annee = `Min année de signature`,
+         Montant = `Transaction du projets par pays - Transaction`,
+         Secteur = `Sous CICID`)
+```
+
+```{r}
+#| label: Paramètre couleurs pays
+#| echo: false
+#| message: false
+#| warning: false
+
+couleurs_pays <- c(
+  "CAMEROUN"                    = "#007A5E",
+  "CENTRAFRICAINE, REPUBLIQUE"  = "#002B7F",
+  "CONGO"                       = "#FBDE4A",
+  "GABON"                       = "#3675B5",
+  "SAO-TOME-ET-PRINCIPE"        = "#D21034"
+)
+
+options(ggplot2.discrete.fill = list(couleurs_pays))
+options(ggplot2.discrete.colour = list(couleurs_pays))
+```
+
+```{r}
+#| label: Plot AFD Totaux
+#| echo: false
+#| message: false
+#| warning: false
+
+AFD_Afrq_Total <-
+  AFD_Afrq |> 
+  summarise(`Total (M€)` = round(sum(Montant, na.rm = TRUE)/10^6, 2), .by = Pays) |> 
+  mutate(Pays = fct_reorder(Pays, `Total (M€)`, .desc = TRUE))
+  
+Plot_AFD_Total <- 
+  ggplot(AFD_Afrq_Total, aes(x = "", y = `Total (M€)`, fill = Pays)) +
+ geom_col(color = "white") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label_comma(accuracy = 0.01)(`Total (M€)`)),
+            position = position_stack(vjust = 0.65),
+            size = 3,
+            colour = "white") +
+  theme_void(base_size = 8) +
+  labs(title = "Subvention totale AFD par pays (2018 - 2025)")
+
+```
+
+```{r}
+#| label: Plot AFD Annee
+#| echo: false
+#| message: false
+#| warning: false
+
+AFD_Afrq_Annee <-
+  AFD_Afrq |> 
+  summarise(`Total (M€)` = round(sum(Montant, na.rm = TRUE)/10^6, 2), .by = c(Annee,Pays)) 
+  
+Plot_AFD_Annee <- 
+  ggplot(AFD_Afrq_Annee, aes(x = Annee, y = `Total (M€)`, fill = Pays)) +
+  geom_col() +
+  stat_summary(
+    fun = sum,
+    geom = "text",
+    aes(label = label_comma(accuracy = 0.01)(after_stat(y)), group = Annee),
+    vjust = -0.5,
+    size = 3
+  ) +
+  theme_clean(base_size = 8) +
+  labs(title = "Subvention totale AFD par année et par pays (2018 - 2025)",
+       x = "")
+
+```
+
+```{r}
+#| label: Plot AFD Secteur
+#| echo: false
+#| message: false
+#| warning: false
+
+AFD_Afrq_Secteur <-
+  AFD_Afrq |> 
+  filter(Pays != "SAO-TOME-ET-PRINCIPE") |> 
+  summarise(`Total (M€)` = round(sum(Montant, na.rm = TRUE)/10^6, 2), .by = c(Secteur,Pays)) 
+  
+Plot_AFD_Secteur <- 
+  ggplot(AFD_Afrq_Secteur, aes(y = fct_reorder(Secteur, `Total (M€)`), x = `Total (M€)`, fill = Pays)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~ Pays) +
+  scale_fill_manual(values = couleurs_pays) +
+  theme_clean(base_size = 8) +
+  labs(
+    title = "Subventions AFD par secteur et par pays (2018 - 2025)",
+    y = "",
+    x = "Total (M€)"
+  )
+
+
+```
+
+:::::: panel-tabset
+
+## Répartition par pays
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+Plot_AFD_Total
+```
+
+## Répartition par année
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+Plot_AFD_Annee
+```
+
+## Répartition par secteur
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+Plot_AFD_Secteur
+```
+::::::
+Source : Open Data AFD 
