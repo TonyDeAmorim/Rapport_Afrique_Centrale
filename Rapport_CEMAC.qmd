@@ -12,6 +12,7 @@ Ce document se veut être un rapport détaillant les différentes économies de 
 
 L'entièreté des analyses a été réalisée sur R et les différentes bases de données usitées sont mentionnées en sources.
 
+:::::: panel-tabset
 ```{r}
 #| label: Library Imports and api keys setting
 #| message: false
@@ -395,6 +396,94 @@ nettoyer_df <- function(df, nom_indic) {
 }
 ```
 
+```{r}
+#| label: Paramètre couleurs pays
+#| echo: false
+#| message: false
+#| warning: false
+
+couleurs_pays <- c(
+  "CAMEROUN"                    = "#007A5E",
+  "CENTRAFRICAINE, REPUBLIQUE"  = "#002B7F",
+  "CONGO"                       = "#FBDE4A",
+  "GABON"                       = "#3675B5",
+  "SAO-TOME-ET-PRINCIPE"        = "#D21034"
+)
+
+options(ggplot2.discrete.fill = list(couleurs_pays))
+options(ggplot2.discrete.colour = list(couleurs_pays))
+```
+
+## La zone CEMAC
+
+La Communauté Économique et Monétaire de l'Afrique Centrale (CEMAC) est fondée en 1994 et regroupe 6 pays d'Afrique Centrale autour d'une volonté de coopération économique. La Communauté est fondée autour de 5 piliers (solidarité, collégialité, égalité, transparence et justice) et l'héritière de Union Douanière Equatoriale (UDC) devenue l'Union Douanière et Economique de l'Afrique Centrale (UDEAC) en 1964 puis CEMAC en 1994.
+
+```{r}
+#| label: Fiche CEMAC
+#| echo: false
+#| message: false
+#| warning: false
+
+Fiche_CEMAC <-
+    tibble(
+      "Date de création" = "16 mars 1994",
+      "Pays membres" = "Cameroun, Centrafrique, Congo, Gabon, Guinée Equatoriale, Tchad",
+      "Président de la Conférence des Chefs d’État" = "Denis Sassou-Nguesso (2025 - )",
+      "Président de la Comission de la CEMAC" = "Baltasar Engonga Edjo'o (2023 - )",
+      "Siège" = "Bangui, Centrafrique"
+    )
+
+  Fiche_CEMAC |>
+    pivot_longer(
+      cols = everything(),
+      names_to = "Indicateur",
+      values_to = "Valeur"
+    ) |>
+    kable(col.names = c("", "")) |>
+    kable_styling(full_width = FALSE) |>
+    column_spec(1, bold = TRUE, width = "40%") |>
+    column_spec(2, width = "60%")
+  
+
+```
+
+## La BEAC
+
+La Banque des Etats d'Afrique Centrale (BEAC) est fondée en 1972 dans le but de coordoner les politiques monétaires des pays de la zone CEMAC et d'en émettre la monnaie fiduciaire. 
+
+```{r}
+#| label: Fiche BEAC
+#| echo: false
+#| message: false
+#| warning: false
+
+Fiche_BEAC <-
+    tibble(
+      "Date de création" = "22 novembre 1972",
+      "Pays membres" = "Cameroun, Centrafrique, Congo, Gabon, Guinée Equatoriale, Tchad",
+      "Gouverneur" = "Yvon Sana Bangui",
+      "Vice Gouverneur" = "Michel Dzombala",
+      "Siège" = "Yaoundé, Cameroun"
+    )
+
+  Fiche_BEAC |>
+    pivot_longer(
+      cols = everything(),
+      names_to = "Indicateur",
+      values_to = "Valeur"
+    ) |>
+    kable(col.names = c("", "")) |>
+    kable_styling(full_width = FALSE) |>
+    column_spec(1, bold = TRUE, width = "40%") |>
+    column_spec(2, width = "60%")
+  
+
+```
+
+
+::::::
+
+
 # Fiches info géographique et démographique
 
 ::::::::::::::::::::::: panel-tabset
@@ -722,7 +811,10 @@ Fiche_GQ
 #| warning: false
 #| echo: false
 
-Fiche_COD <- Fiche_Pays("COD", "Kinshasa", Import_Pop("COD"), "2 345 410", Import_Dens("COD"), "Français", "Félix Tshisekedi (2019 - )", "30 juin 1960")
+Fiche_COD <- Fiche_Pays("COD", "Kinshasa", Import_Pop("COD"), "2 345 410", Import_Dens("COD"), "Français", "Félix Tshisekedi (2019 - )", "30 juin 1960")|>
+  footnote(
+    general = "Pays non-membre CEMAC"
+  )
 
 
 # --- PARTENAIRES ---
@@ -889,7 +981,7 @@ Fiche_Tchad
 
 *Source : Banque Mondiale (WDI).*
 
-# Bilan économique
+# Bilan économique de la zone CEMAC
 
 ```{r}
 #| label: Importation et formatage des données
@@ -897,15 +989,17 @@ Fiche_Tchad
 #| message: false
 #| warning: false
 
-PIB_PAYS        <- Import_ECON_data("NY.GDP.MKTP.CD",       Liste_Pays_ISO3, 9, 3)
-PIB_GROWTH_PAYS <- Import_ECON_data("NY.GDP.MKTP.KD.ZG",    Liste_Pays_ISO3, 0, 1)
-INFLATION_PAYS  <- Import_ECON_data("FP.CPI.TOTL.ZG",       Liste_Pays_ISO3, 0, 1)
-IDE_PAYS        <- Import_ECON_data("BX.KLT.DINV.WD.GD.ZS", Liste_Pays_ISO3, 0, 1)
-DETTE_PAYS          <- Import_WEO(Liste_Pays_ISO3, "GGXWDG_NGDP", 0, 2)
-PIB_HAB_PAYS         <- Import_WEO(Liste_Pays_ISO3, "NGDPDPC",     0, 0)
-SOLDE_BUDGET_PAYS    <- Import_WEO(Liste_Pays_ISO3, "GGXCNL_NGDP", 0, 2)
-COMPTE_COURANT_PAYS  <- Import_WEO(Liste_Pays_ISO3, "BCA_NGDPD",   0, 2)
-DEPENSES_PUB_PAYS    <- Import_WEO(Liste_Pays_ISO3, "GGX_NGDP",    0, 2)
+Indicateurs_CEMAC_par_pays <- list(
+  "PIB (Mrd USD)"          = Import_ECON_data("NY.GDP.MKTP.CD",       Liste_Pays_ISO3, 9, 3),
+  "Croissance (% PIB)"     = Import_ECON_data("NY.GDP.MKTP.KD.ZG",    Liste_Pays_ISO3, 0, 1),
+  "Inflation (%)"          = Import_ECON_data("FP.CPI.TOTL.ZG",       Liste_Pays_ISO3, 0, 1),
+  "IDE (% PIB)"            = Import_ECON_data("BX.KLT.DINV.WD.GD.ZS", Liste_Pays_ISO3, 0, 1),
+  "Dette (% PIB)"          = Import_WEO(Liste_Pays_ISO3, "GGXWDG_NGDP", 0, 2),
+  "PIB/hab (USD)"          = Import_WEO(Liste_Pays_ISO3, "NGDPDPC",     0, 0),
+  "Solde Budg. (% PIB)"    = Import_WEO(Liste_Pays_ISO3, "GGXCNL_NGDP", 0, 2),
+  "Compte Cour. (% PIB)"   = Import_WEO(Liste_Pays_ISO3, "BCA_NGDPD",   0, 2),
+  "Dépenses Pub. (% PIB)"  = Import_WEO(Liste_Pays_ISO3, "GGX_NGDP",    0, 2)
+)
 ```
 
 ```{r}
@@ -915,20 +1009,10 @@ DEPENSES_PUB_PAYS    <- Import_WEO(Liste_Pays_ISO3, "GGX_NGDP",    0, 2)
 #| warning: false
 #| column: page
 
-list_indic <- list(
-  "PIB (Mrd USD)"        = PIB_PAYS,
-  "Croissance (% PIB)"  = PIB_GROWTH_PAYS,
-  "Inflation (%)"    = INFLATION_PAYS,
-  "IDE (% PIB)"          = IDE_PAYS,
-  "Dette (% PIB)"        = DETTE_PAYS,
-  "PIB/hab (USD)"        = PIB_HAB_PAYS,
-  "Solde Budg. (% PIB)"  = SOLDE_BUDGET_PAYS,
-  "Compte Cour. (% PIB)" = COMPTE_COURANT_PAYS,
-  "Dépenses Pub. (% PIB)"= DEPENSES_PUB_PAYS
-)
 
 
-df_ECON <- imap(list_indic, nettoyer_df) |>
+
+df_ECON <- imap(Indicateurs_CEMAC_par_pays, nettoyer_df) |>
   reduce(left_join, by = "Pays")
 
 texte_footnote <- df_ECON |>
@@ -973,71 +1057,52 @@ df_ECON_complet |>
 Bilan économique de la zone CEMAC.
 
 ```{r}
-#| label: Tableau des CEMAC
 #| echo: false
 #| message: false
 #| warning: false
 
-df_CEMAC <- imap(list_indic, nettoyer_df) |>
-  reduce(left_join, by = "Pays") |> 
-  filter(Pays != "São Tomé",
-         Pays != "RDC")
+Clean_BEAC_ECON <- function(Pays){
+  name <- paste0("DataBase/Indicateurs_ECON_BEAC/Indicateurs_", Pays, ".xlsx")
+  
+  nb <- 3
+  if (Pays == "CEMAC") {
+    nb = 2
+  }
+  
+  df <- read_excel(name, skip = nb)
+  df <-
+    df |> 
+    mutate(across(2:13, as.numeric),
+           across(where(is.numeric), \(x) round(x, 2))) |> 
+    filter(!is.na(...1)) |>
+    filter(if_any(-...1, \(col) !is.na(suppressWarnings(as.numeric(col))))) |> 
+    rename(Indicateur = ...1) |>
+    pivot_longer(
+      cols = -Indicateur,
+      names_to = "Annee",
+      values_to = "Valeur"
+    ) 
+}
 
-Moyenne_CEMAC <- 
-  df_CEMAC|>
-  summarise(
-    Pays = "Moyenne",
-    across(where(is.numeric) & !starts_with("Yr_"), ~ round(mean(.x, na.rm = TRUE), 2)),
-    across(starts_with("Yr_"), ~ NA)
-  )
-
-df_CEMAC <- 
-  bind_rows(df_CEMAC, Moyenne_CEMAC) |> 
-  select(!starts_with("Yr"))
 ```
+
 
 ```{r}
-#| label: PIB CEMAC Time Plot
+#| label: Import data ECON BEAC
 #| echo: false
 #| message: false
 #| warning: false
+ 
 
+Pays_BEAC <- c("Cameroun", "Congo", "Guinee", "RCA", "Tchad", "CEMAC")
 
-PIB_HAB_SERIE <- 
-  Import_WEO_Time_Series(c("CMR", "CAF", "COG", "GAB", "GNQ", "TCD"), "NGDPDPC", 0, 2) |>
-  left_join(table_correspondance, by = "Pays_ISO") |>
-  select(Pays, annee, valeur) |> 
-  pivot_wider(
-    names_from = annee,
-    values_from = valeur
-  ) 
-
-PIB_HAB_SERIE_MOY <- PIB_HAB_SERIE |>
-  summarise(across(where(is.numeric), \(x) round(mean(x, na.rm = TRUE), 2))) |>
-  pivot_longer(
-    cols = everything(),
-    names_to = "Annee",
-    names_transform = as.numeric,
-    values_to = "PIB_Hab"
-  )
-
-Moyenne_wide <- PIB_HAB_SERIE_MOY |>
-  mutate(Pays = "Moyenne") |>
-  pivot_wider(names_from = Annee, values_from = PIB_Hab)
-
-PIB_HAB_SERIE <- bind_rows(PIB_HAB_SERIE, Moyenne_wide)
-
-ggplot(PIB_HAB_SERIE_MOY, aes(x = Annee, y = PIB_Hab)) +
-  geom_line(color = "#2b5c8f", linewidth = 1.2) +
-  
-  theme_clean(base_size = 9) +
-  labs(
-    title = "Évolution du PIB moyen par habitant",
-    x = "Année",
-    y = "PIB/hab (USD)"
-  ) 
+Indicateurs_BEAC_ECON <- map(
+  set_names(Pays_BEAC),
+  Clean_BEAC_ECON
+)
 
 ```
+
 
 # Relations Bilatérales
 
@@ -1047,46 +1112,38 @@ ggplot(PIB_HAB_SERIE_MOY, aes(x = Annee, y = PIB_Hab)) +
 #| message: false
 #| warning: false
 
-AFD_Afrq_Centrale <- read_excel("DataBase/AFD_Afrq_Centrale.xlsx")
-AFD_Afrq_Australe <- read_excel("DataBase/AFD_Afrq_Australe.xlsx")
 
-AFD_Afrq_Australe <-
-  AFD_Afrq_Australe |> 
-  filter(`Pays afd` == "SAO-TOME-ET-PRINCIPE")
 
-AFD_Afrq_Centrale <-
-  AFD_Afrq_Centrale |> 
-  filter(`Pays afd` %in% c("CAMEROUN", "CENTRAFRICAINE, REPUBLIQUE", "CONGO", "GABON")) 
 
-AFD_Afrq <- bind_rows(AFD_Afrq_Centrale, AFD_Afrq_Australe)
 
-AFD_Afrq <-
-  AFD_Afrq |> 
-  select(`Min année de signature`, `Transaction du projets par pays - Transaction`,
-         `Pays afd`, `Sous CICID`, Libellé) |>
-  rename(Pays = `Pays afd`,
-         Annee = `Min année de signature`,
-         Montant = `Transaction du projets par pays - Transaction`,
-         Secteur = `Sous CICID`)
-```
-
-```{r}
-#| label: Paramètre couleurs pays
-#| echo: false
-#| message: false
-#| warning: false
-
-couleurs_pays <- c(
-  "CAMEROUN"                    = "#007A5E",
-  "CENTRAFRICAINE, REPUBLIQUE"  = "#002B7F",
-  "CONGO"                       = "#FBDE4A",
-  "GABON"                       = "#3675B5",
-  "SAO-TOME-ET-PRINCIPE"        = "#D21034"
+AFD_Synthese <- list(
+  
+  AFD_Afrq = bind_rows(
+    read_excel("DataBase/AFD_Afrq_Centrale.xlsx") |> 
+      filter(`Pays afd` %in% c("CAMEROUN", "CENTRAFRICAINE, REPUBLIQUE", "CONGO", "GABON")), 
+    read_excel("DataBase/AFD_Afrq_Australe.xlsx") |> 
+      filter(`Pays afd` == "SAO-TOME-ET-PRINCIPE")) |> 
+    select(`Min année de signature`, `Transaction du projets par pays - Transaction`,
+           `Pays afd`, `Sous CICID`, Libellé) |>
+    rename(Pays = `Pays afd`,
+           Annee = `Min année de signature`,
+           Montant = `Transaction du projets par pays - Transaction`,
+           Secteur = `Sous CICID`),
+  
+  Annee = AFD_Afrq |>
+    summarise(`Total (M€)` = round(sum(Montant, na.rm = TRUE) / 10^6, 2), .by = c(Annee, Pays)),
+    
+  Total = AFD_Afrq |>
+    summarise(`Total (M€)` = round(sum(Montant, na.rm = TRUE) / 10^6, 2), .by = Pays) |>
+    mutate(Pays = fct_reorder(Pays, `Total (M€)`, .desc = TRUE)),
+    
+  Secteur = AFD_Afrq |>
+    filter(Pays != "SAO-TOME-ET-PRINCIPE") |>
+    summarise(`Total (M€)` = round(sum(Montant, na.rm = TRUE) / 10^6, 2), .by = c(Secteur, Pays))
 )
 
-options(ggplot2.discrete.fill = list(couleurs_pays))
-options(ggplot2.discrete.colour = list(couleurs_pays))
 ```
+
 
 ```{r}
 #| label: Plot AFD Totaux
@@ -1094,13 +1151,22 @@ options(ggplot2.discrete.colour = list(couleurs_pays))
 #| message: false
 #| warning: false
 
-AFD_Afrq_Total <-
-  AFD_Afrq |> 
-  summarise(`Total (M€)` = round(sum(Montant, na.rm = TRUE)/10^6, 2), .by = Pays) |> 
-  mutate(Pays = fct_reorder(Pays, `Total (M€)`, .desc = TRUE))
-  
+
+
+```
+
+
+:::::: panel-tabset
+
+## Répartition par pays
+```{r}
+#| label: Plot AFD Totaux
+#| echo: false
+#| message: false
+#| warning: false
+
 Plot_AFD_Total <- 
-  ggplot(AFD_Afrq_Total, aes(x = "", y = `Total (M€)`, fill = Pays)) +
+  ggplot(AFD_Synthese$Total, aes(x = "", y = `Total (M€)`, fill = Pays)) +
  geom_col(color = "white") +
   coord_polar(theta = "y") +
   geom_text(aes(label = label_comma(accuracy = 0.01)(`Total (M€)`)),
@@ -1110,20 +1176,18 @@ Plot_AFD_Total <-
   theme_void(base_size = 8) +
   labs(title = "Subvention totale AFD par pays (2018 - 2025)")
 
+Plot_AFD_Total
 ```
 
+## Répartition par année
 ```{r}
 #| label: Plot AFD Annee
 #| echo: false
 #| message: false
 #| warning: false
 
-AFD_Afrq_Annee <-
-  AFD_Afrq |> 
-  summarise(`Total (M€)` = round(sum(Montant, na.rm = TRUE)/10^6, 2), .by = c(Annee,Pays)) 
-  
 Plot_AFD_Annee <- 
-  ggplot(AFD_Afrq_Annee, aes(x = Annee, y = `Total (M€)`, fill = Pays)) +
+  ggplot(AFD_Synthese$Annee, aes(x = Annee, y = `Total (M€)`, fill = Pays)) +
   geom_col() +
   stat_summary(
     fun = sum,
@@ -1136,21 +1200,18 @@ Plot_AFD_Annee <-
   labs(title = "Subvention totale AFD par année et par pays (2018 - 2025)",
        x = "")
 
+Plot_AFD_Annee
 ```
 
+## Répartition par secteur
 ```{r}
 #| label: Plot AFD Secteur
 #| echo: false
 #| message: false
 #| warning: false
 
-AFD_Afrq_Secteur <-
-  AFD_Afrq |> 
-  filter(Pays != "SAO-TOME-ET-PRINCIPE") |> 
-  summarise(`Total (M€)` = round(sum(Montant, na.rm = TRUE)/10^6, 2), .by = c(Secteur,Pays)) 
-  
 Plot_AFD_Secteur <- 
-  ggplot(AFD_Afrq_Secteur, aes(y = fct_reorder(Secteur, `Total (M€)`), x = `Total (M€)`, fill = Pays)) +
+  ggplot(AFD_Synthese$Secteur, aes(y = fct_reorder(Secteur, `Total (M€)`), x = `Total (M€)`, fill = Pays)) +
   geom_col(show.legend = FALSE) +
   facet_wrap(~ Pays) +
   scale_fill_manual(values = couleurs_pays) +
@@ -1161,36 +1222,11 @@ Plot_AFD_Secteur <-
     x = "Total (M€)"
   )
 
-
-```
-
-:::::: panel-tabset
-
-## Répartition par pays
-```{r}
-#| echo: false
-#| message: false
-#| warning: false
-
-Plot_AFD_Total
-```
-
-## Répartition par année
-```{r}
-#| echo: false
-#| message: false
-#| warning: false
-
-Plot_AFD_Annee
-```
-
-## Répartition par secteur
-```{r}
-#| echo: false
-#| message: false
-#| warning: false
-
 Plot_AFD_Secteur
 ```
 ::::::
 Source : Open Data AFD 
+
+# Source 
+
+- 
