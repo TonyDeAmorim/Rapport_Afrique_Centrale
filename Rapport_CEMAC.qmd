@@ -38,7 +38,6 @@ library(scales)
 library(patchwork)
 
 set_primary_comtrade_key(Sys.getenv("COMTRADE_PRIMARY"))
-
 ```
 
 ```{r}
@@ -142,7 +141,7 @@ Code_douaniers_fr <- tribble(
 reporters <- c("CMR", "CAF", "COG", "GAB", "COD", "STP")
 
 
-codes_S4_2digits <- 
+codes_S4_2digits <-
   ct_get_ref_table(dataset_id = "S4") |>
   filter(nchar(id) == 2) |>
   pull(id)
@@ -154,20 +153,24 @@ partners_cemac <- ct_get_data(
   type = "goods",
   flow_direction = c("Import", "Export"),
   start_date = 2023 - 1,
-  end_date   = 2023,
+  end_date = 2023,
   process = TRUE,
   tidy_cols = TRUE,
   primary_token = "31a18d94cdf04f13b9c8a59ef63110c2",
   cache = TRUE
 )
 
-partners_cemac <- 
+partners_cemac <-
   partners_cemac |>
-  filter(period == max(period, na.rm = TRUE),
-         partner_desc != "World") |>
-  select(Reporter = reporter_iso, Flow = flow_desc,
-         Partenaire = partner_desc, Valeur_M_USD = primary_value,
-         Annee = period) |>
+  filter(
+    period == max(period, na.rm = TRUE),
+    partner_desc != "World"
+  ) |>
+  select(
+    Reporter = reporter_iso, Flow = flow_desc,
+    Partenaire = partner_desc, Valeur_M_USD = primary_value,
+    Annee = period
+  ) |>
   mutate(Valeur_M_USD = round(Valeur_M_USD / 1e6, 1))
 
 products_cemac <- ct_get_data(
@@ -178,17 +181,19 @@ products_cemac <- ct_get_data(
   commodity_code = codes_S4_2digits,
   flow_direction = c("Import", "Export"),
   start_date = 2023 - 1,
-  end_date   = 2023,
+  end_date = 2023,
   process = TRUE,
   tidy_cols = TRUE,
   primary_token = "31a18d94cdf04f13b9c8a59ef63110c2",
   cache = TRUE
 )
 
-products_cemac <- 
+products_cemac <-
   products_cemac |>
-  filter(period == max(period, na.rm = TRUE),
-         cmd_desc != "All Commodities") |>
+  filter(
+    period == max(period, na.rm = TRUE),
+    cmd_desc != "All Commodities"
+  ) |>
   mutate(cmd_code = str_pad(as.character(cmd_code), width = 2, pad = "0")) |>
   left_join(Code_douaniers_fr, by = "cmd_code") |>
   mutate(
@@ -199,7 +204,7 @@ products_cemac <-
   select(Reporter = reporter_iso, Flow = flow_desc, Produit, Valeur_M_USD, Annee) |>
   distinct(Reporter, Flow, Produit, .keep_all = TRUE)
 
-extraire_top10_partenaires <- function(pays, flow){
+extraire_top10_partenaires <- function(pays, flow) {
   partners_cemac |>
     filter(Reporter == pays, Flow == flow) |>
     select(-Reporter, -Flow) |>
@@ -207,7 +212,7 @@ extraire_top10_partenaires <- function(pays, flow){
     slice_head(n = 10)
 }
 
-extraire_top10_produits <- function(pays, flow){
+extraire_top10_produits <- function(pays, flow) {
   products_cemac |>
     filter(Reporter == pays, Flow == flow) |>
     select(-Reporter, -Flow) |>
@@ -278,25 +283,30 @@ Fiche_Pays <- function(ISO, CAP, POP, SUP, DENS, LG, PRES, IND) {
 #| warning: false
 #| echo: false
 
-pop_raw <- wb_data(indicator = "SP.POP.TOTL", country = Liste_Pays_ISO3, mrnev = 1) |>
-  select(iso3c, SP.POP.TOTL, date_pop = date)
-
-dens_raw <- wb_data(indicator = "EN.POP.DNST", country = Liste_Pays_ISO3, mrnev = 1) |>
-  select(iso3c, EN.POP.DNST, date_dens = date)
-
-indic_cemac <- pop_raw |>
-  left_join(dens_raw, by = "iso3c") |>
+indic_cemac <- 
+  wb_data(indicator = "SP.POP.TOTL", country = Liste_Pays_ISO3, mrv = 1) |>
+  select(iso3c, SP.POP.TOTL, date_pop = date) |>
+  
+  left_join(wb_data(indicator = "EN.POP.DNST", country = Liste_Pays_ISO3, mrv = 1) |>
+    select(iso3c, EN.POP.DNST, date_dens = date), by = "iso3c") |>
+  
   mutate(
     Pop_formate  = paste0(format(round(SP.POP.TOTL / 1e6, 2), nsmall = 2), " M (", date_pop, ")"),
     Dens_formate = paste0(round(EN.POP.DNST, 2), " (", date_dens, ")")
   ) |>
+  
   select(Reporter = iso3c, Pop_formate, Dens_formate)
 
-Import_Pop <- function(pays){
-  indic_cemac |> filter(Reporter == pays) |> pull(Pop_formate)
+
+Import_Pop <- function(pays) {
+  indic_cemac |>
+    filter(Reporter == pays) |>
+    pull(Pop_formate)
 }
-Import_Dens <- function(pays){
-  indic_cemac |> filter(Reporter == pays) |> pull(Dens_formate)
+Import_Dens <- function(pays) {
+  indic_cemac |>
+    filter(Reporter == pays) |>
+    pull(Dens_formate)
 }
 ```
 
@@ -309,12 +319,11 @@ Import_Dens <- function(pays){
 Import_ECON_data <- function(WB_CODE, PAYS_VEC, EXP, ROUND) {
   df <- wb_data(indicator = WB_CODE, country = PAYS_VEC, mrnev = 1)
   tibble(
-    Pays_ISO = df$iso2c,   
+    Pays_ISO = df$iso2c,
     valeur   = round(df[[WB_CODE]] / (10^EXP), ROUND),
     annee    = as.numeric(df$date)
   )
 }
-
 ```
 
 ```{r}
@@ -335,7 +344,7 @@ Import_WEO <- function(ISO_VEC, REF, EXP, ROUND) {
   dataset |>
     mutate(TIME_PERIOD = as.numeric(TIME_PERIOD)) |>
     filter(TIME_PERIOD <= 2026, !is.na(OBS_VALUE)) |>
-    group_by(COUNTRY) |>                      
+    group_by(COUNTRY) |>
     slice_max(order_by = TIME_PERIOD, n = 1) |>
     ungroup() |>
     transmute(
@@ -344,8 +353,6 @@ Import_WEO <- function(ISO_VEC, REF, EXP, ROUND) {
       valeur   = round(as.numeric(OBS_VALUE) / (10^EXP), ROUND)
     )
 }
-
-
 ```
 
 ```{r}
@@ -356,16 +363,16 @@ Import_WEO <- function(ISO_VEC, REF, EXP, ROUND) {
 Import_WEO_Time_Series <- function(ISO, REF, EXP, ROUND) {
   ref <- "IMF.RES,WEO"
   filter <- paste0(paste(ISO, collapse = "+"), ".", REF)
-  
+
   capture.output(dataset <- as.data.frame(suppressMessages(readSDMX(
     providerId = "IMF_DATA",
     resource = "data",
     flowRef = ref,
     key = filter
   ))))
-  
+
   col_pays <- intersect(c("COUNTRY", "REF_AREA"), names(dataset))[1]
-  
+
   dataset <-
     dataset |>
     mutate(TIME_PERIOD = as.numeric(TIME_PERIOD)) |>
@@ -385,8 +392,8 @@ Import_WEO_Time_Series <- function(ISO, REF, EXP, ROUND) {
 
 nettoyer_df <- function(df, nom_indic) {
   col_val <- intersect(c("valeur", "OBS_VALUE"), names(df))[1]
-  col_yr  <- intersect(c("annee", "TIME_PERIOD"), names(df))[1]
-  
+  col_yr <- intersect(c("annee", "TIME_PERIOD"), names(df))[1]
+
   df |>
     transmute(
       Pays = Nom_Pays,
@@ -425,26 +432,24 @@ La Communauté Économique et Monétaire de l'Afrique Centrale (CEMAC) est fond�
 #| warning: false
 
 Fiche_CEMAC <-
-    tibble(
-      "Date de création" = "16 mars 1994",
-      "Pays membres" = "Cameroun, Centrafrique, Congo, Gabon, Guinée Equatoriale, Tchad",
-      "Président de la Conférence des Chefs d’État" = "Denis Sassou-Nguesso (2025 - )",
-      "Président de la Comission de la CEMAC" = "Baltasar Engonga Edjo'o (2023 - )",
-      "Siège" = "Bangui, Centrafrique"
-    )
+  tibble(
+    "Date de création" = "16 mars 1994",
+    "Pays membres" = "Cameroun, Centrafrique, Congo, Gabon, Guinée Equatoriale, Tchad",
+    "Président de la Conférence des Chefs d’État" = "Denis Sassou-Nguesso (2025 - )",
+    "Président de la Comission de la CEMAC" = "Baltasar Engonga Edjo'o (2023 - )",
+    "Siège" = "Bangui, Centrafrique"
+  )
 
-  Fiche_CEMAC |>
-    pivot_longer(
-      cols = everything(),
-      names_to = "Indicateur",
-      values_to = "Valeur"
-    ) |>
-    kable(col.names = c("", "")) |>
-    kable_styling(full_width = FALSE) |>
-    column_spec(1, bold = TRUE, width = "40%") |>
-    column_spec(2, width = "60%")
-  
-
+Fiche_CEMAC |>
+  pivot_longer(
+    cols = everything(),
+    names_to = "Indicateur",
+    values_to = "Valeur"
+  ) |>
+  kable(col.names = c("", "")) |>
+  kable_styling(full_width = FALSE) |>
+  column_spec(1, bold = TRUE, width = "40%") |>
+  column_spec(2, width = "60%")
 ```
 
 ## La BEAC
@@ -458,26 +463,24 @@ La Banque des Etats d'Afrique Centrale (BEAC) est fondée en 1972 dans le but de
 #| warning: false
 
 Fiche_BEAC <-
-    tibble(
-      "Date de création" = "22 novembre 1972",
-      "Pays membres" = "Cameroun, Centrafrique, Congo, Gabon, Guinée Equatoriale, Tchad",
-      "Gouverneur" = "Yvon Sana Bangui",
-      "Vice Gouverneur" = "Michel Dzombala",
-      "Siège" = "Yaoundé, Cameroun"
-    )
+  tibble(
+    "Date de création" = "22 novembre 1972",
+    "Pays membres" = "Cameroun, Centrafrique, Congo, Gabon, Guinée Equatoriale, Tchad",
+    "Gouverneur" = "Yvon Sana Bangui",
+    "Vice Gouverneur" = "Michel Dzombala",
+    "Siège" = "Yaoundé, Cameroun"
+  )
 
-  Fiche_BEAC |>
-    pivot_longer(
-      cols = everything(),
-      names_to = "Indicateur",
-      values_to = "Valeur"
-    ) |>
-    kable(col.names = c("", "")) |>
-    kable_styling(full_width = FALSE) |>
-    column_spec(1, bold = TRUE, width = "40%") |>
-    column_spec(2, width = "60%")
-  
-
+Fiche_BEAC |>
+  pivot_longer(
+    cols = everything(),
+    names_to = "Indicateur",
+    values_to = "Valeur"
+  ) |>
+  kable(col.names = c("", "")) |>
+  kable_styling(full_width = FALSE) |>
+  column_spec(1, bold = TRUE, width = "40%") |>
+  column_spec(2, width = "60%")
 ```
 
 
@@ -499,24 +502,24 @@ Fiche_Cameroun <- Fiche_Pays("CMR", "Yaoundé", Import_Pop("CMR"), "475 442", Im
 
 # --- PARTENAIRES ---
 tbl_partenaires_exp_cmr <- creer_table_top10(
-  extraire_top10_partenaires("CMR", "Export"), 
-  titre_base = "Top 10 des Partenaires à l'Exportation", 
+  extraire_top10_partenaires("CMR", "Export"),
+  titre_base = "Top 10 des Partenaires à l'Exportation",
   label_col1 = "Pays Partenaire"
 )
 tbl_partenaires_imp_cmr <- creer_table_top10(
-  extraire_top10_partenaires("CMR", "Import"), 
-  titre_base = "Top 10 des Partenaires à l'Importation", 
+  extraire_top10_partenaires("CMR", "Import"),
+  titre_base = "Top 10 des Partenaires à l'Importation",
   label_col1 = "Pays Partenaire"
 )
 # --- PRODUITS ---
 tbl_produit_exp_cmr <- creer_table_top10(
-  extraire_top10_produits("CMR", "Export"), 
-  titre_base = "Top 10 des Produits Exportés", 
+  extraire_top10_produits("CMR", "Export"),
+  titre_base = "Top 10 des Produits Exportés",
   label_col1 = "Catégorie de Produit"
 )
 tbl_produit_imp_cmr <- creer_table_top10(
-  extraire_top10_produits("CMR", "Import"), 
-  titre_base = "Top 10 des Produits Importés", 
+  extraire_top10_produits("CMR", "Import"),
+  titre_base = "Top 10 des Produits Importés",
   label_col1 = "Catégorie de Produit"
 )
 ```
@@ -572,24 +575,24 @@ Fiche_CF <- Fiche_Pays("CAF", "Bangui", Import_Pop("CAF"), "622 984", Import_Den
 
 # --- PARTENAIRES ---
 tbl_partenaires_exp_CAF <- creer_table_top10(
-  extraire_top10_partenaires("CAF", "Export"), 
-  titre_base = "Top 10 des Partenaires à l'Exportation", 
+  extraire_top10_partenaires("CAF", "Export"),
+  titre_base = "Top 10 des Partenaires à l'Exportation",
   label_col1 = "Pays Partenaire"
 )
 tbl_partenaires_imp_CAF <- creer_table_top10(
-  extraire_top10_partenaires("CAF", "Import"), 
-  titre_base = "Top 10 des Partenaires à l'Importation", 
+  extraire_top10_partenaires("CAF", "Import"),
+  titre_base = "Top 10 des Partenaires à l'Importation",
   label_col1 = "Pays Partenaire"
 )
 # --- PRODUITS ---
 tbl_produit_exp_CAF <- creer_table_top10(
-  extraire_top10_produits("CAF", "Export"), 
-  titre_base = "Top 10 des Produits Exportés", 
+  extraire_top10_produits("CAF", "Export"),
+  titre_base = "Top 10 des Produits Exportés",
   label_col1 = "Catégorie de Produit"
 )
 tbl_produit_imp_CAF <- creer_table_top10(
-  extraire_top10_produits("CAF", "Import"), 
-  titre_base = "Top 10 des Produits Importés", 
+  extraire_top10_produits("CAF", "Import"),
+  titre_base = "Top 10 des Produits Importés",
   label_col1 = "Catégorie de Produit"
 )
 ```
@@ -645,24 +648,24 @@ Fiche_CG <- Fiche_Pays("COG", "Brazzaville", Import_Pop("COG"), "342 000", Impor
 
 # --- PARTENAIRES ---
 tbl_partenaires_exp_COG <- creer_table_top10(
-  extraire_top10_partenaires("COG", "Export"), 
-  titre_base = "Top 10 des Partenaires à l'Exportation", 
+  extraire_top10_partenaires("COG", "Export"),
+  titre_base = "Top 10 des Partenaires à l'Exportation",
   label_col1 = "Pays Partenaire"
 )
 tbl_partenaires_imp_COG <- creer_table_top10(
-  extraire_top10_partenaires("COG", "Import"), 
-  titre_base = "Top 10 des Partenaires à l'Importation", 
+  extraire_top10_partenaires("COG", "Import"),
+  titre_base = "Top 10 des Partenaires à l'Importation",
   label_col1 = "Pays Partenaire"
 )
 # --- PRODUITS ---
 tbl_produit_exp_COG <- creer_table_top10(
-  extraire_top10_produits("COG", "Export"), 
-  titre_base = "Top 10 des Produits Exportés", 
+  extraire_top10_produits("COG", "Export"),
+  titre_base = "Top 10 des Produits Exportés",
   label_col1 = "Catégorie de Produit"
 )
 tbl_produit_imp_COG <- creer_table_top10(
-  extraire_top10_produits("COG", "Import"), 
-  titre_base = "Top 10 des Produits Importés", 
+  extraire_top10_produits("COG", "Import"),
+  titre_base = "Top 10 des Produits Importés",
   label_col1 = "Catégorie de Produit"
 )
 ```
@@ -719,24 +722,24 @@ Fiche_GAB <- Fiche_Pays("GAB", "Libreville", Import_Pop("GAB"), "267 667", Impor
 
 # --- PARTENAIRES ---
 tbl_partenaires_exp_GAB <- creer_table_top10(
-  extraire_top10_partenaires("GAB", "Export"), 
-  titre_base = "Top 10 des Partenaires à l'Exportation", 
+  extraire_top10_partenaires("GAB", "Export"),
+  titre_base = "Top 10 des Partenaires à l'Exportation",
   label_col1 = "Pays Partenaire"
 )
 tbl_partenaires_imp_GAB <- creer_table_top10(
-  extraire_top10_partenaires("GAB", "Import"), 
-  titre_base = "Top 10 des Partenaires à l'Importation", 
+  extraire_top10_partenaires("GAB", "Import"),
+  titre_base = "Top 10 des Partenaires à l'Importation",
   label_col1 = "Pays Partenaire"
 )
 # --- PRODUITS ---
 tbl_produit_exp_GAB <- creer_table_top10(
-  extraire_top10_produits("GAB", "Export"), 
-  titre_base = "Top 10 des Produits Exportés", 
+  extraire_top10_produits("GAB", "Export"),
+  titre_base = "Top 10 des Produits Exportés",
   label_col1 = "Catégorie de Produit"
 )
 tbl_produit_imp_GAB <- creer_table_top10(
-  extraire_top10_produits("GAB", "Import"), 
-  titre_base = "Top 10 des Produits Importés", 
+  extraire_top10_produits("GAB", "Import"),
+  titre_base = "Top 10 des Produits Importés",
   label_col1 = "Catégorie de Produit"
 )
 ```
@@ -811,7 +814,7 @@ Fiche_GQ
 #| warning: false
 #| echo: false
 
-Fiche_COD <- Fiche_Pays("COD", "Kinshasa", Import_Pop("COD"), "2 345 410", Import_Dens("COD"), "Français", "Félix Tshisekedi (2019 - )", "30 juin 1960")|>
+Fiche_COD <- Fiche_Pays("COD", "Kinshasa", Import_Pop("COD"), "2 345 410", Import_Dens("COD"), "Français", "Félix Tshisekedi (2019 - )", "30 juin 1960") |>
   footnote(
     general = "Pays non-membre CEMAC"
   )
@@ -819,24 +822,24 @@ Fiche_COD <- Fiche_Pays("COD", "Kinshasa", Import_Pop("COD"), "2 345 410", Impor
 
 # --- PARTENAIRES ---
 tbl_partenaires_exp_COD <- creer_table_top10(
-  extraire_top10_partenaires("COD", "Export"), 
-  titre_base = "Top 10 des Partenaires à l'Exportation", 
+  extraire_top10_partenaires("COD", "Export"),
+  titre_base = "Top 10 des Partenaires à l'Exportation",
   label_col1 = "Pays Partenaire"
 )
 tbl_partenaires_imp_COD <- creer_table_top10(
-  extraire_top10_partenaires("COD", "Import"), 
-  titre_base = "Top 10 des Partenaires à l'Importation", 
+  extraire_top10_partenaires("COD", "Import"),
+  titre_base = "Top 10 des Partenaires à l'Importation",
   label_col1 = "Pays Partenaire"
 )
 # --- PRODUITS ---
 tbl_produit_exp_COD <- creer_table_top10(
-  extraire_top10_produits("COD", "Export"), 
-  titre_base = "Top 10 des Produits Exportés", 
+  extraire_top10_produits("COD", "Export"),
+  titre_base = "Top 10 des Produits Exportés",
   label_col1 = "Catégorie de Produit"
 )
 tbl_produit_imp_COD <- creer_table_top10(
-  extraire_top10_produits("COD", "Import"), 
-  titre_base = "Top 10 des Produits Importés", 
+  extraire_top10_produits("COD", "Import"),
+  titre_base = "Top 10 des Produits Importés",
   label_col1 = "Catégorie de Produit"
 )
 ```
@@ -895,24 +898,24 @@ Fiche_STP <- Fiche_Pays("STP", "São Tomé", Import_Pop("STP"), "1 001", Import_
 
 # --- PARTENAIRES ---
 tbl_partenaires_exp_STP <- creer_table_top10(
-  extraire_top10_partenaires("STP", "Export"), 
-  titre_base = "Top 10 des Partenaires à l'Exportation", 
+  extraire_top10_partenaires("STP", "Export"),
+  titre_base = "Top 10 des Partenaires à l'Exportation",
   label_col1 = "Pays Partenaire"
 )
 tbl_partenaires_imp_STP <- creer_table_top10(
-  extraire_top10_partenaires("STP", "Import"), 
-  titre_base = "Top 10 des Partenaires à l'Importation", 
+  extraire_top10_partenaires("STP", "Import"),
+  titre_base = "Top 10 des Partenaires à l'Importation",
   label_col1 = "Pays Partenaire"
 )
 # --- PRODUITS ---
 tbl_produit_exp_STP <- creer_table_top10(
-  extraire_top10_produits("STP", "Export"), 
-  titre_base = "Top 10 des Produits Exportés", 
+  extraire_top10_produits("STP", "Export"),
+  titre_base = "Top 10 des Produits Exportés",
   label_col1 = "Catégorie de Produit"
 )
 tbl_produit_imp_STP <- creer_table_top10(
-  extraire_top10_produits("STP", "Import"), 
-  titre_base = "Top 10 des Produits Importés", 
+  extraire_top10_produits("STP", "Import"),
+  titre_base = "Top 10 des Produits Importés",
   label_col1 = "Catégorie de Produit"
 )
 ```
@@ -990,15 +993,15 @@ Fiche_Tchad
 #| warning: false
 
 Indicateurs_CEMAC_par_pays <- list(
-  "PIB (Mrd USD)"          = Import_ECON_data("NY.GDP.MKTP.CD",       Liste_Pays_ISO3, 9, 3),
-  "Croissance (% PIB)"     = Import_ECON_data("NY.GDP.MKTP.KD.ZG",    Liste_Pays_ISO3, 0, 1),
-  "Inflation (%)"          = Import_ECON_data("FP.CPI.TOTL.ZG",       Liste_Pays_ISO3, 0, 1),
+  "PIB (Mrd USD)"          = Import_ECON_data("NY.GDP.MKTP.CD", Liste_Pays_ISO3, 9, 3),
+  "Croissance (% PIB)"     = Import_ECON_data("NY.GDP.MKTP.KD.ZG", Liste_Pays_ISO3, 0, 1),
+  "Inflation (%)"          = Import_ECON_data("FP.CPI.TOTL.ZG", Liste_Pays_ISO3, 0, 1),
   "IDE (% PIB)"            = Import_ECON_data("BX.KLT.DINV.WD.GD.ZS", Liste_Pays_ISO3, 0, 1),
   "Dette (% PIB)"          = Import_WEO(Liste_Pays_ISO3, "GGXWDG_NGDP", 0, 2),
-  "PIB/hab (USD)"          = Import_WEO(Liste_Pays_ISO3, "NGDPDPC",     0, 0),
+  "PIB/hab (USD)"          = Import_WEO(Liste_Pays_ISO3, "NGDPDPC", 0, 0),
   "Solde Budg. (% PIB)"    = Import_WEO(Liste_Pays_ISO3, "GGXCNL_NGDP", 0, 2),
-  "Compte Cour. (% PIB)"   = Import_WEO(Liste_Pays_ISO3, "BCA_NGDPD",   0, 2),
-  "Dépenses Pub. (% PIB)"  = Import_WEO(Liste_Pays_ISO3, "GGX_NGDP",    0, 2)
+  "Compte Cour. (% PIB)"   = Import_WEO(Liste_Pays_ISO3, "BCA_NGDPD", 0, 2),
+  "Dépenses Pub. (% PIB)"  = Import_WEO(Liste_Pays_ISO3, "GGX_NGDP", 0, 2)
 )
 ```
 
@@ -1028,7 +1031,7 @@ ligne_moyenne <- df_ECON |>
   summarise(
     Pays = "Moyenne",
     across(where(is.numeric) & !starts_with("Yr_"), ~ round(mean(.x, na.rm = TRUE), 2)),
-    across(starts_with("Yr_"), ~ NA)
+    across(starts_with("Yr_"), ~NA)
   )
 
 df_ECON_complet <- bind_rows(df_ECON, ligne_moyenne)
@@ -1037,18 +1040,18 @@ df_ECON_complet |>
   select(-starts_with("Yr_")) |>
   datatable(
     rownames = FALSE,
-    extensions = c('Buttons'),
+    extensions = c("Buttons"),
     caption = tags$caption(
-      style = 'caption-side: bottom; text-align: left; font-size: 0.85em; color: #555; padding-top: 8px;',
+      style = "caption-side: bottom; text-align: left; font-size: 0.85em; color: #555; padding-top: 8px;",
       paste0("Années des données - ", texte_footnote, " | Source : Banque Mondiale & World Economic Outlook")
     ),
     options = list(
-      dom = 'Bfrtip',                  
-      buttons = c('csv', 'excel'),      
+      dom = "Bfrtip",
+      buttons = c("csv", "excel"),
       pageLength = 10,
-      scrollX = TRUE,       
+      scrollX = TRUE,
       language = list(
-        url = '//cdn.datatables.net/plug-ins/1.10.11/i18n/French.json' 
+        url = "//cdn.datatables.net/plug-ins/1.10.11/i18n/French.json"
       )
     )
   )
@@ -1061,29 +1064,30 @@ Bilan économique de la zone CEMAC.
 #| message: false
 #| warning: false
 
-Clean_BEAC_ECON <- function(Pays){
+Clean_BEAC_ECON <- function(Pays) {
   name <- paste0("DataBase/Indicateurs_ECON_BEAC/Indicateurs_", Pays, ".xlsx")
-  
+
   nb <- 3
   if (Pays == "CEMAC") {
-    nb = 2
+    nb <- 2
   }
-  
+
   df <- read_excel(name, skip = nb)
   df <-
-    df |> 
-    mutate(across(2:13, as.numeric),
-           across(where(is.numeric), \(x) round(x, 2))) |> 
+    df |>
+    mutate(
+      across(2:13, as.numeric),
+      across(where(is.numeric), \(x) round(x, 2))
+    ) |>
     filter(!is.na(...1)) |>
-    filter(if_any(-...1, \(col) !is.na(suppressWarnings(as.numeric(col))))) |> 
+    filter(if_any(-...1, \(col) !is.na(suppressWarnings(as.numeric(col))))) |>
     rename(Indicateur = ...1) |>
     pivot_longer(
       cols = -Indicateur,
       names_to = "Annee",
       values_to = "Valeur"
-    ) 
+    )
 }
-
 ```
 
 
@@ -1092,7 +1096,7 @@ Clean_BEAC_ECON <- function(Pays){
 #| echo: false
 #| message: false
 #| warning: false
- 
+
 
 Pays_BEAC <- c("Cameroun", "Congo", "Guinee", "RCA", "Tchad", "CEMAC")
 
@@ -1100,7 +1104,6 @@ Indicateurs_BEAC_ECON <- map(
   set_names(Pays_BEAC),
   Clean_BEAC_ECON
 )
-
 ```
 
 
@@ -1112,48 +1115,34 @@ Indicateurs_BEAC_ECON <- map(
 #| message: false
 #| warning: false
 
-
-
-
-
-AFD_Synthese <- list(
-  
+AFD_Synthese <- lst(
   AFD_Afrq = bind_rows(
-    read_excel("DataBase/AFD_Afrq_Centrale.xlsx") |> 
-      filter(`Pays afd` %in% c("CAMEROUN", "CENTRAFRICAINE, REPUBLIQUE", "CONGO", "GABON")), 
-    read_excel("DataBase/AFD_Afrq_Australe.xlsx") |> 
-      filter(`Pays afd` == "SAO-TOME-ET-PRINCIPE")) |> 
-    select(`Min année de signature`, `Transaction du projets par pays - Transaction`,
-           `Pays afd`, `Sous CICID`, Libellé) |>
-    rename(Pays = `Pays afd`,
-           Annee = `Min année de signature`,
-           Montant = `Transaction du projets par pays - Transaction`,
-           Secteur = `Sous CICID`),
-  
+    read_excel("DataBase/AFD_Afrq_Centrale.xlsx") |>
+      filter(`Pays afd` %in% c("CAMEROUN", "CENTRAFRICAINE, REPUBLIQUE", "CONGO", "GABON")),
+    read_excel("DataBase/AFD_Afrq_Australe.xlsx") |>
+      filter(`Pays afd` == "SAO-TOME-ET-PRINCIPE")
+  ) |>
+    select(
+      `Min année de signature`, `Transaction du projets par pays - Transaction`,
+      `Pays afd`, `Sous CICID`, Libellé
+    ) |>
+    rename(
+      Pays = `Pays afd`,
+      Annee = `Min année de signature`,
+      Montant = `Transaction du projets par pays - Transaction`,
+      Secteur = `Sous CICID`
+    ),
   Annee = AFD_Afrq |>
     summarise(`Total (M€)` = round(sum(Montant, na.rm = TRUE) / 10^6, 2), .by = c(Annee, Pays)),
-    
   Total = AFD_Afrq |>
     summarise(`Total (M€)` = round(sum(Montant, na.rm = TRUE) / 10^6, 2), .by = Pays) |>
     mutate(Pays = fct_reorder(Pays, `Total (M€)`, .desc = TRUE)),
-    
   Secteur = AFD_Afrq |>
     filter(Pays != "SAO-TOME-ET-PRINCIPE") |>
     summarise(`Total (M€)` = round(sum(Montant, na.rm = TRUE) / 10^6, 2), .by = c(Secteur, Pays))
 )
-
 ```
 
-
-```{r}
-#| label: Plot AFD Totaux
-#| echo: false
-#| message: false
-#| warning: false
-
-
-
-```
 
 
 :::::: panel-tabset
@@ -1165,16 +1154,17 @@ AFD_Synthese <- list(
 #| message: false
 #| warning: false
 
-Plot_AFD_Total <- 
+Plot_AFD_Total <-
   ggplot(AFD_Synthese$Total, aes(x = "", y = `Total (M€)`, fill = Pays)) +
- geom_col(color = "white") +
+  geom_col(color = "white") +
   coord_polar(theta = "y") +
   geom_text(aes(label = label_comma(accuracy = 0.01)(`Total (M€)`)),
-            position = position_stack(vjust = 0.65),
-            size = 3,
-            colour = "white") +
+    position = position_stack(vjust = 0.65),
+    size = 3,
+    colour = "white"
+  ) +
   theme_void(base_size = 8) +
-  labs(title = "Subvention totale AFD par pays (2018 - 2025)")
+  labs(title = "Subvention totale AFD par pays (2018 - 2025 / M€)")
 
 Plot_AFD_Total
 ```
@@ -1186,7 +1176,7 @@ Plot_AFD_Total
 #| message: false
 #| warning: false
 
-Plot_AFD_Annee <- 
+Plot_AFD_Annee <-
   ggplot(AFD_Synthese$Annee, aes(x = Annee, y = `Total (M€)`, fill = Pays)) +
   geom_col() +
   stat_summary(
@@ -1197,8 +1187,10 @@ Plot_AFD_Annee <-
     size = 3
   ) +
   theme_clean(base_size = 8) +
-  labs(title = "Subvention totale AFD par année et par pays (2018 - 2025)",
-       x = "")
+  labs(
+    title = "Subvention totale AFD par année et par pays (2018 - 2025 / M€)",
+    x = ""
+  )
 
 Plot_AFD_Annee
 ```
@@ -1210,14 +1202,14 @@ Plot_AFD_Annee
 #| message: false
 #| warning: false
 
-Plot_AFD_Secteur <- 
+Plot_AFD_Secteur <-
   ggplot(AFD_Synthese$Secteur, aes(y = fct_reorder(Secteur, `Total (M€)`), x = `Total (M€)`, fill = Pays)) +
   geom_col(show.legend = FALSE) +
-  facet_wrap(~ Pays) +
+  facet_wrap(~Pays) +
   scale_fill_manual(values = couleurs_pays) +
   theme_clean(base_size = 8) +
   labs(
-    title = "Subventions AFD par secteur et par pays (2018 - 2025)",
+    title = "Subventions AFD par secteur et par pays (2018 - 2025 / M€)",
     y = "",
     x = "Total (M€)"
   )
