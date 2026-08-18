@@ -425,6 +425,16 @@ options(ggplot2.discrete.colour = list(couleurs_pays))
 
 La Communauté Économique et Monétaire de l'Afrique Centrale (CEMAC) est fondée en 1994 et regroupe 6 pays d'Afrique Centrale autour d'une volonté de coopération économique. La Communauté est fondée autour de 5 piliers (solidarité, collégialité, égalité, transparence et justice) et l'héritière de Union Douanière Equatoriale (UDC) devenue l'Union Douanière et Economique de l'Afrique Centrale (UDEAC) en 1964 puis CEMAC en 1994.
 
+Crée en 1959, l'UDE regroupe originellement la RCA, le Congo, le Gabon et le Tchad au sein d'une union douanière ayant pour but de mettre en place et de faciliter la coopération entre ses états membres. Le Cameroun rejoint l'UDE en 1961, avant que celle-ci ne devienne le 8 décembre 1964 l’Union Douanière et Economique de l’Afrique Centrale (UDEAC) après la siganture du traité de Brazzaville. Ce texte acte alors la création d'une zone de libre-échange et réitère la volonté de coopération économique entre états membres avec la mise en place du premier tarif douanier en 1967. En 1972, les pays membres de l'UDEAC signent la «Convention Commune sur la libre circulation des personnes et le droit d'établissement» et ratifient l'adoption d'une monnaie commune : le Franc CFA, émis par la BEAC (Banque des Etats de l'Afrique Centrale). Le 1er janvier 1985, la Guinné Equatoriale devient le 6ème membre de l'UDEAC mais l'émergence de nouveaux défis économiques et sociaux durant la décennie suivant force l'Union à s'adapter. 
+
+Le 16 mars 1994, les dirigeants d'Etats se réunissent à N’Djamena au Tchad pour la signature du Traité instituant la Communauté Economique et Monétaire de l’Afrique Centrale (CEMAC). Cette nouvelle communauté, entrée en vigueur en 1996, repose sur deux piliers :
+
+- L’Union Économique de l’Afrique Centrale (UEAC), en charge de la coopération économique entre pays signataires. 
+- L’Union Monétaire de l’Afrique Centrale (UMAC), qui suppervise la convergence monétaire des États membres, tous usant du Franc CFA. 
+
+La présidence de la CEMAC est assurée de façon rotative par un des dirigeants d'Etat membre dirigeant la Conférence des Chefs d’État (Denis Sassou-Nguesso depuis 2025). La Comission de la CEMAC, organe de pilotage administratif de la communauté chargée de superviser la mise en place du Programme Economique Régional (PER) est dirigée par un président, élu pour un mandat de 5 ans (actuellement Baltasar Engonga Edjo'o depuis 2023). 
+
+
 ```{r}
 #| label: Fiche CEMAC
 #| echo: false
@@ -437,7 +447,9 @@ Fiche_CEMAC <-
     "Pays membres" = "Cameroun, Centrafrique, Congo, Gabon, Guinée Equatoriale, Tchad",
     "Président de la Conférence des Chefs d’État" = "Denis Sassou-Nguesso (2025 - )",
     "Président de la Comission de la CEMAC" = "Baltasar Engonga Edjo'o (2023 - )",
-    "Siège" = "Bangui, Centrafrique"
+    "Siège" = "Bangui, Centrafrique",
+    "Superficie totale" = "3 020 372 km²",
+    "Population totale" = "52 M"
   )
 
 Fiche_CEMAC |>
@@ -454,7 +466,17 @@ Fiche_CEMAC |>
 
 ## La BEAC
 
-La Banque des Etats d'Afrique Centrale (BEAC) est fondée en 1972 dans le but de coordoner les politiques monétaires des pays de la zone CEMAC et d'en émettre la monnaie fiduciaire. 
+La Banque des Etats d'Afrique Centrale (BEAC) est crée le 22 novembre 1972 pour remplacer la Banque Centrale des Etats de l’Afrique Equatoriale et du Cameroun (BCEAEC). Son objectif est de coordoner les politiques monétaires des pays de la zone CEMAC et d'en émettre la monnaie fiduciaire, le Franc CFA. Parmis ses missions l'institution est également en charge des réserves de changes des Etats membres, de la conduite de la politique de change de la CEMAC et de promouvoir le bon fonctionnement des systèmes de paiement et de règlement ainsi que la stabilité financière. La Banque est gouvernée par un conseil de 6 membres représentant chaque pays de la Communauté nommés par la Conférence des Chefs d’Etats de la CEMAC pour un mandat non renouvelable : le Gouverneur, le Vice-Gouverneur, le Secrétaire Général et trois Directeurs Généraux. Le conseil d'administration de la Banque est quant à lui constitué de 14 membres : 2 par pays membres et 2 pour la France. 
+
+La BEAC détient aujourd'hui un capital de 353 milliards de francs CFA et poursuit sa mission essentielle de maintient de la stabilité monétaire de la CEMAC. La politique de change de l'insitution est donc articulée autour de 4 piliers :
+
+- *Une parité fixe entre le franc CFA et l’euro. *
+- *Une convertibilité du franc CFA garantie par la France. *
+- *Une liberté totale des transferts entre les pays de la Zone Franc. *
+- *La mise en commun des réserves de change.*
+
+Aujourd'hui, la parité EUR/CFA s'établit à 1€ = 655,957 FCFA. 
+
 
 ```{r}
 #| label: Fiche BEAC
