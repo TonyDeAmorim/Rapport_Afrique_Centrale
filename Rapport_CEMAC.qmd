@@ -4,6 +4,17 @@ author: "Tony De Amorim"
 format: 
   html:
     page-layout: full
+    grid:
+      body-width: 1600px
+      margin-width: 100px
+    include-in-header:
+      text: |
+        <style>
+          p {
+            text-align: justify;
+            text-justify: inter-word;
+          }
+        </style>
 ---
 
 # Préambule
@@ -40,6 +51,7 @@ library(reactable)
 
 
 set_primary_comtrade_key(Sys.getenv("COMTRADE_PRIMARY"))
+
 ```
 
 ```{r}
@@ -502,7 +514,8 @@ Fiche_BEAC <-
     "Pays membres" = "Cameroun, Centrafrique, Congo, Gabon, Guinée Equatoriale, Tchad",
     "Gouverneur" = "Yvon Sana Bangui",
     "Vice Gouverneur" = "Michel Dzombala",
-    "Siège" = "Yaoundé, Cameroun"
+    "Siège" = "Yaoundé, Cameroun",
+    "Taux directeur" = "4.50% (juin 2026)"
   )
 
 Fiche_BEAC |>
@@ -557,6 +570,10 @@ Clean_BEAC_ECON <- function(Pays) {
 ```
 
 ```{r}
+#| message: false
+#| warning: false
+#| echo: false
+
 Clean_BEAC_ECON_wide <- function(Pays) {
   name <- paste0("DataBase/Indicateurs_ECON_BEAC/Indicateurs_", Pays, ".xlsx")
 
@@ -577,6 +594,7 @@ Clean_BEAC_ECON_wide <- function(Pays) {
     rename(Indicateur = ...1) |> 
     select(Indicateur, rev(everything()[-1]))
 }
+
 ```
 
 ```{r}
@@ -600,6 +618,10 @@ Indicateurs_BEAC_ECON_wide <- map(
 ```
 
 ```{r}
+#| message: false
+#| warning: false
+#| echo: false
+
 reactable_BEAC_wide <- function(PAYS){
 reactable(
   Indicateurs_BEAC_ECON_wide[[PAYS]],
@@ -610,6 +632,13 @@ reactable(
   striped = TRUE,
   highlight = TRUE,
   bordered = TRUE,
+  columns = list(
+      Indicateur = colDef(
+        name = "Indicateur",
+        minWidth = 350,   
+        sticky = "left"   
+      )
+    ),
   theme = reactableTheme(
     borderColor = "#dfe2e5",
     stripedColor = "#f6f8fa",
@@ -657,17 +686,24 @@ tbl_produit_imp_cmr <- creer_table_top10(
 )
 ```
 
+::::: panel-tabset
+### Historique
 
 Les premières populations du Cameroun sont vraisemblablement les Bankas, habitants aujourd'hui au Sud et à l'Est du pays tandis que le territoire couvrant le Sud-Ouest de l’actuel Cameroun est considéré comme le berceau des peuples Bantous. Lorsque les portugais découvrent l’estuaire du Wouri, l'abondance de crevette les poussent à nommer le fleuve Río dos Camarões, donnant son nom moderne au Cameroun. Après de nombreuses années d'échanges commerciaux, dont la traite négrière, avec principalement les peuples doualas du Sud, la région passe sous contrôle allemand à partir de 1886. Le territoire n'est cependant réellement contrôlé par la force coloniale qu'après 1900 et les défaites consécutives des lamidats peuls de l’Adamaoua et du Sultan Rabah du Bornou. 
 
-Après la Première Guerre Mondiale, le Cameroun est partagé entre l'Angleterre et la France à partir de 1916, fracture encore aujourd'hui marqué dans l’État moderne camerounais. L'Union des Populations du Cameroun (UPC), fondée en 1948 et dirigée par Ruben Um Nyobé, entame dès 1955 une lutte armée pour la réunification et l'indépendance du Cameroun. Celui-ci est cependant assassiné le 13 septembre 1958 par les forces coloniales, qui poussent ensuite pour l'investissement des pleins pouvoirs pour leur soutien Ahmadou Ahidjo le 30 octobre 1959. Ahdijo devient alors le premier président du Cameroun lors de son indépendance le 1er janvier 1960, suivi en 1961 par la réunification avec la zone anglaise, à l'exception de sa partie Nord qui choisit le Nigéria. Paul Biya prend la tête du pays le 6 novembre 1982 après la démission de Ahmadou Ahidjo et met en place les premières élections multipartites en mars 1992. A ce jour, il dirige toujours le pays. 
+Après la Première Guerre Mondiale, le Cameroun est partagé entre l'Angleterre et la France à partir de 1916, fracture encore aujourd'hui marqué dans l’État moderne camerounais. L'Union des Populations du Cameroun (UPC), fondée en 1948 et dirigée par Ruben Um Nyobé, entame dès 1955 une lutte armée pour la réunification et l'indépendance du Cameroun. Celui-ci est cependant assassiné le 13 septembre 1958 par les forces coloniales, qui poussent ensuite pour l'investiture des pleins pouvoirs pour leur soutien Ahmadou Ahidjo le 30 octobre 1959. Ahdijo devient alors le premier président du Cameroun lors de son indépendance le 1er janvier 1960, suivi en 1961 par la réunification avec la zone anglaise, à l'exception de sa partie Nord qui choisit le Nigéria. Paul Biya prend la tête du pays le 6 novembre 1982 après la démission de Ahmadou Ahidjo et met en place les premières élections multipartites en mars 1992. Réélu le 12 octobre 2025 sous la bannière du  Rassemblement Démocratique du Peuple Camerounais (RDPC), il dirige encore à ce jour le pays. 
+
+
+
+
+![Carte des régions du Cameroun](.\Ressources\Carte_Cameroun.jpg){#fig-cameroun width=50% fig-align="center"}
+
+<p style="text-align: center; font-size: 0.85em; color: gray;">Source : Cartograf.fr</p>
+
+### Profil Général
 
 Le Cameroun compte 240 ethnies réparties en trois grands groupes : les Bantous, les Semi-Bantous et les Soudanais, ce qui correspond à 240 langues nationales. Le territoire est divisé en 10 régions désignées par leur location géographique, sa capitale politique est Yaoundé et sa capitale économique Douala, située sur le littoral du pays. Le Cameroun est un état laïc où les deux religions principales sont le Christianisme et l’Islam. Le français et l'anglais sont les deux langues principales, se divisant à hauteur de 70% et 30% de la population respectivement.
 
-Économiquement, le Cameroun se distingue par un fort service de la dette malgré un volume absolu relativement faible (39.3% du PIB en 2026). La croissance en 2025 de 3.6% est également un facteur positif, bien que la dépendance du pays à ses flux de pétroles le rende vulnérable aux chocs externes tels que la crise actuelle dans le détroit d'Hormuz. 
-
-::::: panel-tabset
-###  Profil Général
 
 ```{r}
 #| echo: false
@@ -675,7 +711,79 @@ Le Cameroun compte 240 ethnies réparties en trois grands groupes : les Bantous,
 Fiche_Cameroun
 ```
 
-### Mesures Economique
+### Profil Economique
+
+Le Cameroun est l'économie la plus importante et la plus diversifiée de la zone CEMAC (44% de son PIB total). Le secteur primaire représente 17% du PIB total, avec 10% pour le secteur agricole alors même que 40% de la population travaille dans ce secteur. Plus généralement, l'économie camerounaise reste dépendante à des productions manufacturières (cacao, coton, sucre, huile, ...) qui manquent de compétitivité et dont les cours sont fortement influencés par la conjoncture mondiale. Le secteur secondaire représente 25% du PIB avec une baisse marquée de l'importance du pétrole, qui ne représente plus que 3,6% du PIB en 2024, et une augmentation de la part du GNL (de 9,7Md de pieds cubes en 2015 à 76Md en 2024). Les services comptent pour 54% du PIB via les télécommunications, le transport, le commerce, l'hôtellerie et la restauration. Le pays est également soutenu par un secteur bancaire et des services financiers solides.  
+
+La croissance du pays (3.2% en 2025) se caractérise par deux dynamiques parallèles : la baisse de la part du secteur pétrolier, du au vieillissement des raffineries et au contexte de baisse des prix du baril, et la prise d'importance du secteur non-pétrolier. Cette seconde tendance est soutenue par la Stratégie Nationale du Développement (SND-30) qui pose un objectif de croissance non-pétrolier de 8.1% en 2030, tout en voulant réduire les importations et renforcer les industries locales.
+
+:::: {.columns}
+
+::: {.column width="75%"}
+La dette camerounaise est jugée stable par la majorité des acteurs financiers et la mise en place d'un plan FMI renouvelé en 2021 pour une durée de 4 ans et un montant de plus de 800M USD va en ce sens. De nombreuses mesures ont été adoptées dans cette direction : optimisation des dépenses courantes, élargissement de l'assiette fiscale, réduction des exonérations, créations de nouvelles taxes et fin des subventions maintenant artificiellement bas le prix du carburant. Différents points de tensions subsistent cependant. Malgré une dette relativement faible  à 39.3% du PIB en 2026, le service de la dette reste extrêmement coûteux, captant 35% des recettes budgétaires (soit 8.3% du PIB) en 2026. De plus, la dette camerounaise reste très exposé, étant composé à 63% de dette extérieure (dont 56,4% en bailleurs multilatéraux). Enfin, l'inflation reste contrôlée grâce à une politique monétaire stricte, une appréciation du taux de change et le ralentissement des prix alimentaires, bien qu'un sursaut soit attendu en 2026 avec une hausse des dépenses gouvernementales anticipée.  
+
+:::
+
+::: {.column width="3%"}
+:::
+
+::: {.column width="22%"}
+::: {.callout-tip appearance="simple" icon="false"}
+**Notation de la Dette (2026)** 
+
+- Fitch : B
+- S&P : B-
+- Moodys : Caa1
+
+:::
+:::
+
+::::
+
+La Balance Courante camerounaise est structurellement négative, ses exportations étant composées à 85% de produits non-transformés, avec une dépendance au secteur pétrolier. La baisse des prix du barils, la hausse de la demande pour les biens et services importés et la dégradation des termes de l'échanges de près de 16,3% attendue par le FMI en 2026 viennent renforcer ce constat. Ce déficit reste grandement financé par des IDE entrants, principalement lié à l'extraction de ressources et dont la Chine est aujourd'hui le premier contributeur, notamment dans les mines de fer, l'agriculture et via des prêts au gouvernement. 
+
+::: {.callout-note appearance="simple" icon="false"}
+#### Projets d'envergure au Cameroun
+
+:::: {.columns}
+
+::: {.column width="33%"}
+**Projets miniers**
+
+- Grand Zambi, region du Bipindi : Extraction de Fer
+- Minim Martap : Extraction de Beauxite
+- Sanaga 2 : GNL
+- Hilli Episeyo : GNL
+
+
+:::
+
+::: {.column width="33%"}
+**Projets Energétiques**
+
+3 barages hydroélectriques en construction :
+
+- Memve'ele
+- Lom Pangar
+- Nachtigal
+
+:::
+
+::: {.column width="33%"}
+**Projets d'infrastructures**
+
+- Port en eau profonde de Kribi
+
+:::
+
+::::
+
+:::
+
+
+:::: panel-tabset
+
+#### Mesures Générales
 
 ```{r}
 #| echo: false
@@ -684,7 +792,7 @@ reactable_BEAC_wide("Cameroun")
 ```
 
 
-###  Partenaires Commerciaux
+####  Partenaires Commerciaux
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -698,7 +806,7 @@ tbl_partenaires_imp_cmr
 ```
 :::
 
-###  Produits Échangés
+####  Produits Échangés
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -711,6 +819,7 @@ tbl_produit_exp_cmr
 tbl_produit_imp_cmr
 ```
 :::
+::::
 :::::
 
 ## République Centrafricaine
@@ -1167,6 +1276,8 @@ Fiche_Tchad <- Fiche_Pays("TCD", "N'Djamena", Import_Pop("TCD"), "1 284 000", Im
 #| echo: false
 
 Fiche_Tchad
+
+
 ```
 
 ### Mesures Economique
