@@ -12,7 +12,7 @@ Ce document se veut être un rapport détaillant les différentes économies de 
 
 L'entièreté des analyses a été réalisée sur R et les différentes bases de données usitées sont mentionnées en sources.
 
-:::::: panel-tabset
+
 ```{r}
 #| label: Library Imports and api keys setting
 #| message: false
@@ -421,11 +421,16 @@ options(ggplot2.discrete.fill = list(couleurs_pays))
 options(ggplot2.discrete.colour = list(couleurs_pays))
 ```
 
+# Les piliers économiques et institutionnels d'Afrique Centrale
+
+La région d'Afrique Centrale est à la fois un berceau historique, un centre économique et une force démographique du continent. Les pays de la région s'organisent autour de différents piliers présentés ici. 
+
+:::::: panel-tabset
 ## La zone CEMAC
 
 La Communauté Économique et Monétaire de l'Afrique Centrale (CEMAC) est fondée en 1994 et regroupe 6 pays d'Afrique Centrale autour d'une volonté de coopération économique. La Communauté est fondée autour de 5 piliers (solidarité, collégialité, égalité, transparence et justice) et l'héritière de Union Douanière Equatoriale (UDC) devenue l'Union Douanière et Economique de l'Afrique Centrale (UDEAC) en 1964 puis CEMAC en 1994.
 
-Crée en 1959, l'UDE regroupe originellement la RCA, le Congo, le Gabon et le Tchad au sein d'une union douanière ayant pour but de mettre en place et de faciliter la coopération entre ses états membres. Le Cameroun rejoint l'UDE en 1961, avant que celle-ci ne devienne le 8 décembre 1964 l’Union Douanière et Economique de l’Afrique Centrale (UDEAC) après la siganture du traité de Brazzaville. Ce texte acte alors la création d'une zone de libre-échange et réitère la volonté de coopération économique entre états membres avec la mise en place du premier tarif douanier en 1967. En 1972, les pays membres de l'UDEAC signent la «Convention Commune sur la libre circulation des personnes et le droit d'établissement» et ratifient l'adoption d'une monnaie commune : le Franc CFA, émis par la BEAC (Banque des Etats de l'Afrique Centrale). Le 1er janvier 1985, la Guinné Equatoriale devient le 6ème membre de l'UDEAC mais l'émergence de nouveaux défis économiques et sociaux durant la décennie suivant force l'Union à s'adapter. 
+Crée en 1959, l'UDE regroupe originellement la RCA, le Congo, le Gabon et le Tchad au sein d'une union douanière ayant pour but de mettre en place et de faciliter la coopération entre ses états membres. Le Cameroun rejoint l'UDE en 1961, avant que celle-ci ne devienne le 8 décembre 1964 l’Union Douanière et Economique de l’Afrique Centrale (UDEAC) après la signature du traité de Brazzaville. Ce texte acte alors la création d'une zone de libre-échange et réitère la volonté de coopération économique entre états membres avec la mise en place du premier tarif douanier en 1967. En 1972, les pays membres de l'UDEAC signent la «Convention Commune sur la libre circulation des personnes et le droit d'établissement» et ratifient l'adoption d'une monnaie commune : le Franc CFA, émis par la BEAC (Banque des Etats de l'Afrique Centrale). Le 1er janvier 1985, la Guinné Equatoriale devient le 6ème membre de l'UDEAC mais l'émergence de nouveaux défis économiques et sociaux durant la décennie suivant force l'Union à s'adapter. 
 
 Le 16 mars 1994, les dirigeants d'Etats se réunissent à N’Djamena au Tchad pour la signature du Traité instituant la Communauté Economique et Monétaire de l’Afrique Centrale (CEMAC). Cette nouvelle communauté, entrée en vigueur en 1996, repose sur deux piliers :
 
@@ -511,6 +516,8 @@ Fiche_BEAC |>
 
 # Fiches info géographique et démographique
 
+Cette section a pour but de présenter en détail les pays d'Afrique Centrale dont l'étude échoit au SER, ainsi que leurs économies. Pour chaque pays, des informations générales sont fournies ainsi que les principaux partenaires et produits commercés à l'international. Les informations de commerce étant indisponibles dans la base de données COMTRADE de l'ONU pour la Guinée Equatoriale et le Tchad, seul les informations générales sont disponibles pour ceux-ci. 
+
 ::::::::::::::::::::::: panel-tabset
 ## Cameroun
 
@@ -545,6 +552,11 @@ tbl_produit_imp_cmr <- creer_table_top10(
   label_col1 = "Catégorie de Produit"
 )
 ```
+
+
+Les premières populations du Cameroun sont vraisemblablement les Bankas, habitants aujourd'hui au Sud et à l'Est du pays tandis que le territoire couvrant le Sud-Ouest de l’actuel Cameroun est considéré comme le berceau des peuples Bantous. Lorsque les portugais découvrent l’estuaire du Wouri, l'abondance de crevette les poussent à nommer le fleuve Río dos Camarões, donnant son nom moderne au Cameroun. Après de nombreuses années d'échanges commerciaux, dont la traite négrière, avec principalement les peuples doualas du Sud, la région passe sous contrôle allemand à partir de 1886. Le territoire n'est cependant réellement contrôlé par la force coloniale qu'après 1900 et les défaites consécutives des lamidats peuls de l’Adamaoua et du Sultan Rabah du Bornou. Après la Première Guerre Mondiale, le Cameroun est partagé entre l'Angleterre et la France à partir de 1916, fracture encore aujourd'hui marqué dans l’État moderne camerounais. L'Union des Populations du Cameroun (UPC), fondée en 1948 et dirigée par Ruben Um Nyobé, entame dès 1955 une lutte armée pour la réunification et l'indépendance du Cameroun. Celui-ci est cependant assassiné le 13 septembre 1958 par les forces coloniales, qui poussent ensuite pour l'investissement des pleins pouvoirs pour leur soutien Ahmadou Ahidjo le 30 octobre 1959. Ahdijo devient alors le premier président du Cameroun lors de son indépendance le 1er janvier 1960, suivi en 1961 par la réunification avec la zone anglaise, à l'exception de sa partie Nord qui choisit le Nigéria. Paul Biya prend la tête du pays le 6 novembre 1982 après la démission de Ahmadou Ahidjo et met en place les premières élections multipartites en mars 1992. A ce jour, il dirige toujours le pays. 
+
+Le Cameroun compte 240 ethnies réparties en trois grands groupes : les Bantous, les Semi-Bantous et les Soudanais, ce qui correspond à 240 langues nationales. Le territoire est divisé en 10 régions désignées par leur location géographique, sa capitale politique est Yaoundé et sa capitale économique Douala, située sur le littoral du pays. Le Cameroun est un état laïc où les deux religions principales sont le Christianisme et l’Islam. Le français et l'anglais sont les deux langues principales, se divisant à hauteur de 70% et 30% de la population respectivement. 
 
 ::::: panel-tabset
 ### 📋 Profil Général
