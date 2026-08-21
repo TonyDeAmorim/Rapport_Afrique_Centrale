@@ -36,6 +36,8 @@ library(comtradr)
 library(readxl)
 library(scales)
 library(patchwork)
+library(reactable)
+
 
 set_primary_comtrade_key(Sys.getenv("COMTRADE_PRIMARY"))
 ```
@@ -521,7 +523,104 @@ Fiche_BEAC |>
 
 # Fiches info géographique et démographique
 
-Cette section a pour but de présenter en détail les pays d'Afrique Centrale dont l'étude échoit au SER, ainsi que leurs économies. Pour chaque pays, des informations générales sont fournies ainsi que les principaux partenaires et produits commercés à l'international. Les informations de commerce étant indisponibles dans la base de données COMTRADE de l'ONU pour la Guinée Equatoriale et le Tchad, seul les informations générales sont disponibles pour ceux-ci. 
+Cette section a pour but de présenter en détail les pays d'Afrique Centrale dont l'étude échoit au SER, ainsi que leurs économies. Pour chaque pays, des informations générales sont fournies ainsi que les principaux partenaires et produits commercés à l'international. Les informations de commerce étant indisponibles dans la base de données COMTRADE de l'ONU pour la Guinée Equatoriale et le Tchad, seul les informations générales sont disponibles pour ceux-ci.
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+Clean_BEAC_ECON <- function(Pays) {
+  name <- paste0("DataBase/Indicateurs_ECON_BEAC/Indicateurs_", Pays, ".xlsx")
+
+  nb <- 3
+  if (Pays == "CEMAC") {
+    nb <- 2
+  }
+
+  df <- read_excel(name, skip = nb)
+  df <-
+    df |>
+    mutate(
+      across(2:13, as.numeric),
+      across(where(is.numeric), \(x) round(x, 2))
+    ) |>
+    filter(!is.na(...1)) |>
+    filter(if_any(-...1, \(col) !is.na(suppressWarnings(as.numeric(col))))) |>
+    rename(Indicateur = ...1) |>
+    pivot_longer(
+      cols = -Indicateur,
+      names_to = "Annee",
+      values_to = "Valeur"
+    )
+}
+```
+
+```{r}
+Clean_BEAC_ECON_wide <- function(Pays) {
+  name <- paste0("DataBase/Indicateurs_ECON_BEAC/Indicateurs_", Pays, ".xlsx")
+
+  nb <- 3
+  if (Pays == "CEMAC") {
+    nb <- 2
+  }
+
+  df <- read_excel(name, skip = nb)
+  df <-
+    df |>
+    mutate(
+      across(2:13, as.numeric),
+      across(where(is.numeric), \(x) round(x, 2))
+    ) |>
+    filter(!is.na(...1)) |>
+    filter(if_any(-...1, \(col) !is.na(suppressWarnings(as.numeric(col))))) |>
+    rename(Indicateur = ...1) |> 
+    select(Indicateur, rev(everything()[-1]))
+}
+```
+
+```{r}
+#| label: Import data ECON BEAC
+#| echo: false
+#| message: false
+#| warning: false
+
+
+Pays_BEAC <- c("Cameroun", "Congo", "Gabon", "Guinee", "RCA", "Tchad", "CEMAC")
+
+Indicateurs_BEAC_ECON <- map(
+  set_names(Pays_BEAC),
+  Clean_BEAC_ECON
+)
+
+Indicateurs_BEAC_ECON_wide <- map(
+  set_names(Pays_BEAC),
+  Clean_BEAC_ECON_wide
+)
+```
+
+```{r}
+reactable_BEAC_wide <- function(PAYS){
+reactable(
+  Indicateurs_BEAC_ECON_wide[[PAYS]],
+  searchable = TRUE,
+  filterable = TRUE,
+  pagination = TRUE,
+  defaultPageSize = 10,
+  striped = TRUE,
+  highlight = TRUE,
+  bordered = TRUE,
+  theme = reactableTheme(
+    borderColor = "#dfe2e5",
+    stripedColor = "#f6f8fa",
+    highlightColor = "#f0f5f9"
+  )
+)
+}
+
+
+
+```
 
 ::::::::::::::::::::::: panel-tabset
 ## Cameroun
@@ -559,14 +658,16 @@ tbl_produit_imp_cmr <- creer_table_top10(
 ```
 
 
-Les premières populations du Cameroun sont vraisemblablement les Bankas, habitants aujourd'hui au Sud et à l'Est du pays tandis que le territoire couvrant le Sud-Ouest de l’actuel Cameroun est considéré comme le berceau des peuples Bantous. Lorsque les portugais découvrent l’estuaire du Wouri, l'abondance de crevette les poussent à nommer le fleuve Río dos Camarões, donnant son nom moderne au Cameroun. Après de nombreuses années d'échanges commerciaux, dont la traite négrière, avec principalement les peuples doualas du Sud, la région passe sous contrôle allemand à partir de 1886. Le territoire n'est cependant réellement contrôlé par la force coloniale qu'après 1900 et les défaites consécutives des lamidats peuls de l’Adamaoua et du Sultan Rabah du Bornou. Après la Première Guerre Mondiale, le Cameroun est partagé entre l'Angleterre et la France à partir de 1916, fracture encore aujourd'hui marqué dans l’État moderne camerounais. L'Union des Populations du Cameroun (UPC), fondée en 1948 et dirigée par Ruben Um Nyobé, entame dès 1955 une lutte armée pour la réunification et l'indépendance du Cameroun. Celui-ci est cependant assassiné le 13 septembre 1958 par les forces coloniales, qui poussent ensuite pour l'investissement des pleins pouvoirs pour leur soutien Ahmadou Ahidjo le 30 octobre 1959. Ahdijo devient alors le premier président du Cameroun lors de son indépendance le 1er janvier 1960, suivi en 1961 par la réunification avec la zone anglaise, à l'exception de sa partie Nord qui choisit le Nigéria. Paul Biya prend la tête du pays le 6 novembre 1982 après la démission de Ahmadou Ahidjo et met en place les premières élections multipartites en mars 1992. A ce jour, il dirige toujours le pays. 
+Les premières populations du Cameroun sont vraisemblablement les Bankas, habitants aujourd'hui au Sud et à l'Est du pays tandis que le territoire couvrant le Sud-Ouest de l’actuel Cameroun est considéré comme le berceau des peuples Bantous. Lorsque les portugais découvrent l’estuaire du Wouri, l'abondance de crevette les poussent à nommer le fleuve Río dos Camarões, donnant son nom moderne au Cameroun. Après de nombreuses années d'échanges commerciaux, dont la traite négrière, avec principalement les peuples doualas du Sud, la région passe sous contrôle allemand à partir de 1886. Le territoire n'est cependant réellement contrôlé par la force coloniale qu'après 1900 et les défaites consécutives des lamidats peuls de l’Adamaoua et du Sultan Rabah du Bornou. 
+
+Après la Première Guerre Mondiale, le Cameroun est partagé entre l'Angleterre et la France à partir de 1916, fracture encore aujourd'hui marqué dans l’État moderne camerounais. L'Union des Populations du Cameroun (UPC), fondée en 1948 et dirigée par Ruben Um Nyobé, entame dès 1955 une lutte armée pour la réunification et l'indépendance du Cameroun. Celui-ci est cependant assassiné le 13 septembre 1958 par les forces coloniales, qui poussent ensuite pour l'investissement des pleins pouvoirs pour leur soutien Ahmadou Ahidjo le 30 octobre 1959. Ahdijo devient alors le premier président du Cameroun lors de son indépendance le 1er janvier 1960, suivi en 1961 par la réunification avec la zone anglaise, à l'exception de sa partie Nord qui choisit le Nigéria. Paul Biya prend la tête du pays le 6 novembre 1982 après la démission de Ahmadou Ahidjo et met en place les premières élections multipartites en mars 1992. A ce jour, il dirige toujours le pays. 
 
 Le Cameroun compte 240 ethnies réparties en trois grands groupes : les Bantous, les Semi-Bantous et les Soudanais, ce qui correspond à 240 langues nationales. Le territoire est divisé en 10 régions désignées par leur location géographique, sa capitale politique est Yaoundé et sa capitale économique Douala, située sur le littoral du pays. Le Cameroun est un état laïc où les deux religions principales sont le Christianisme et l’Islam. Le français et l'anglais sont les deux langues principales, se divisant à hauteur de 70% et 30% de la population respectivement.
 
-
+Économiquement, le Cameroun se distingue par un fort service de la dette malgré un volume absolu relativement faible (39.3% du PIB en 2026). La croissance en 2025 de 3.6% est également un facteur positif, bien que la dépendance du pays à ses flux de pétroles le rende vulnérable aux chocs externes tels que la crise actuelle dans le détroit d'Hormuz. 
 
 ::::: panel-tabset
-### 📋 Profil Général
+###  Profil Général
 
 ```{r}
 #| echo: false
@@ -574,7 +675,16 @@ Le Cameroun compte 240 ethnies réparties en trois grands groupes : les Bantous,
 Fiche_Cameroun
 ```
 
-### 🤝 Partenaires Commerciaux
+### Mesures Economique
+
+```{r}
+#| echo: false
+
+reactable_BEAC_wide("Cameroun")
+```
+
+
+###  Partenaires Commerciaux
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -588,7 +698,7 @@ tbl_partenaires_imp_cmr
 ```
 :::
 
-### 📦 Produits Échangés
+###  Produits Échangés
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -639,7 +749,7 @@ tbl_produit_imp_CAF <- creer_table_top10(
 ```
 
 ::::: panel-tabset
-### 📋 Profil Général
+###  Profil Général
 
 ```{r}
 #| echo: false
@@ -647,7 +757,17 @@ tbl_produit_imp_CAF <- creer_table_top10(
 Fiche_CF
 ```
 
-### 🤝 Partenaires Commerciaux
+### Mesures Economique
+
+```{r}
+#| echo: false
+
+reactable_BEAC_wide("RCA")
+```
+
+
+
+###  Partenaires Commerciaux
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -661,7 +781,7 @@ tbl_partenaires_imp_CAF
 ```
 :::
 
-### 📦 Produits Échangés
+###  Produits Échangés
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -712,7 +832,7 @@ tbl_produit_imp_COG <- creer_table_top10(
 ```
 
 ::::: panel-tabset
-### 📋 Profil Général
+###  Profil Général
 
 ```{r}
 #| echo: false
@@ -720,7 +840,16 @@ tbl_produit_imp_COG <- creer_table_top10(
 Fiche_CG
 ```
 
-### 🤝 Partenaires Commerciaux
+### Mesures Economique
+
+```{r}
+#| echo: false
+
+reactable_BEAC_wide("Congo")
+```
+
+
+###  Partenaires Commerciaux
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -734,7 +863,7 @@ tbl_partenaires_imp_COG
 ```
 :::
 
-### 📦 Produits Échangés
+###  Produits Échangés
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -786,7 +915,7 @@ tbl_produit_imp_GAB <- creer_table_top10(
 ```
 
 ::::: panel-tabset
-### 📋 Profil Général
+###  Profil Général
 
 ```{r}
 #| echo: false
@@ -794,7 +923,17 @@ tbl_produit_imp_GAB <- creer_table_top10(
 Fiche_GAB
 ```
 
-### 🤝 Partenaires Commerciaux
+### Mesures Economique
+
+```{r}
+#| echo: false
+
+reactable_BEAC_wide("Gabon")
+```
+
+
+
+###  Partenaires Commerciaux
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -808,7 +947,7 @@ tbl_partenaires_imp_GAB
 ```
 :::
 
-### 📦 Produits Échangés
+###  Produits Échangés
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -836,7 +975,7 @@ Fiche_GQ <- Fiche_Pays("GNQ", "Ciudad de la Paz", Import_Pop("GNQ"), "28,051", I
 ```
 
 ::::: panel-tabset
-### 📋 Profil Général
+###  Profil Général
 
 ```{r}
 #| message: false
@@ -845,6 +984,15 @@ Fiche_GQ <- Fiche_Pays("GNQ", "Ciudad de la Paz", Import_Pop("GNQ"), "28,051", I
 
 Fiche_GQ
 ```
+
+### Mesures Economique
+
+```{r}
+#| echo: false
+
+reactable_BEAC_wide("Guinee")
+```
+
 :::::
 
 ## République Démocratique du Congo
@@ -886,7 +1034,7 @@ tbl_produit_imp_COD <- creer_table_top10(
 ```
 
 ::::: panel-tabset
-### 📋 Profil Général
+###  Profil Général
 
 ```{r}
 #| echo: false
@@ -894,7 +1042,7 @@ tbl_produit_imp_COD <- creer_table_top10(
 Fiche_COD
 ```
 
-### 🤝 Partenaires Commerciaux
+###  Partenaires Commerciaux
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -908,7 +1056,7 @@ tbl_partenaires_imp_COD
 ```
 :::
 
-### 📦 Produits Échangés
+###  Produits Échangés
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -962,7 +1110,7 @@ tbl_produit_imp_STP <- creer_table_top10(
 ```
 
 ::::: panel-tabset
-### 📋 Profil Général
+###  Profil Général
 
 ```{r}
 #| echo: false
@@ -970,7 +1118,7 @@ tbl_produit_imp_STP <- creer_table_top10(
 Fiche_STP
 ```
 
-### 🤝 Partenaires Commerciaux
+###  Partenaires Commerciaux
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -984,7 +1132,7 @@ tbl_partenaires_imp_STP
 ```
 :::
 
-### 📦 Produits Échangés
+###  Produits Échangés
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -1011,7 +1159,7 @@ Fiche_Tchad <- Fiche_Pays("TCD", "N'Djamena", Import_Pop("TCD"), "1 284 000", Im
 ```
 
 ::::: panel-tabset
-### 📋 Profil Général
+###  Profil Général
 
 ```{r}
 #| message: false
@@ -1020,6 +1168,15 @@ Fiche_Tchad <- Fiche_Pays("TCD", "N'Djamena", Import_Pop("TCD"), "1 284 000", Im
 
 Fiche_Tchad
 ```
+
+### Mesures Economique
+
+```{r}
+#| echo: false
+
+reactable_BEAC_wide("Tchad")
+```
+
 :::::
 :::::::::::::::::::::::
 
@@ -1099,53 +1256,6 @@ df_ECON_complet |>
 ```
 
 Bilan économique de la zone CEMAC.
-
-```{r}
-#| echo: false
-#| message: false
-#| warning: false
-
-Clean_BEAC_ECON <- function(Pays) {
-  name <- paste0("DataBase/Indicateurs_ECON_BEAC/Indicateurs_", Pays, ".xlsx")
-
-  nb <- 3
-  if (Pays == "CEMAC") {
-    nb <- 2
-  }
-
-  df <- read_excel(name, skip = nb)
-  df <-
-    df |>
-    mutate(
-      across(2:13, as.numeric),
-      across(where(is.numeric), \(x) round(x, 2))
-    ) |>
-    filter(!is.na(...1)) |>
-    filter(if_any(-...1, \(col) !is.na(suppressWarnings(as.numeric(col))))) |>
-    rename(Indicateur = ...1) |>
-    pivot_longer(
-      cols = -Indicateur,
-      names_to = "Annee",
-      values_to = "Valeur"
-    )
-}
-```
-
-
-```{r}
-#| label: Import data ECON BEAC
-#| echo: false
-#| message: false
-#| warning: false
-
-
-Pays_BEAC <- c("Cameroun", "Congo", "Guinee", "RCA", "Tchad", "CEMAC")
-
-Indicateurs_BEAC_ECON <- map(
-  set_names(Pays_BEAC),
-  Clean_BEAC_ECON
-)
-```
 
 
 # Relations Bilatérales
@@ -1259,6 +1369,9 @@ Plot_AFD_Secteur
 ```
 ::::::
 Source : Open Data AFD 
+
+
+
 
 # Source 
 
