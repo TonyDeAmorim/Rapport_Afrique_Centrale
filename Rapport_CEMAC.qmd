@@ -315,14 +315,18 @@ Import_Dens <- function(pays) {
 #| echo: false
 #| message: true
 #| warning: false
-
+iso2_to_iso3 <- c(
+  "CF" = "CAF", "CM" = "CMR", "CD" = "COD", "CG" = "COG",
+  "GA" = "GAB", "GQ" = "GNQ", "ST" = "STP", "TD" = "TCD"
+)
 Import_ECON_data <- function(WB_CODE, PAYS_VEC, EXP, ROUND) {
   df <- wb_data(indicator = WB_CODE, country = PAYS_VEC, mrnev = 1)
   tibble(
     Pays_ISO = df$iso2c,
     valeur   = round(df[[WB_CODE]] / (10^EXP), ROUND),
     annee    = as.numeric(df$date)
-  )
+  )|>
+mutate(Pays_ISO = recode(Pays_ISO, !!!iso2_to_iso3))
 }
 ```
 
@@ -392,11 +396,12 @@ Import_WEO_Time_Series <- function(ISO, REF, EXP, ROUND) {
 
 nettoyer_df <- function(df, nom_indic) {
   col_val <- intersect(c("valeur", "OBS_VALUE"), names(df))[1]
-  col_yr <- intersect(c("annee", "TIME_PERIOD"), names(df))[1]
-
+  col_yr  <- intersect(c("annee", "TIME_PERIOD"), names(df))[1]
+  col_iso <- intersect(c("Pays_ISO", "iso3c", "ISO3", "country", "Pays"), names(df))[1]
+  
   df |>
     transmute(
-      Pays = Nom_Pays,
+      Pays = .data[[col_iso]],
       !!nom_indic := as.numeric(.data[[col_val]]),
       !!paste0("Yr_", nom_indic) := .data[[col_yr]]
     )
@@ -556,7 +561,9 @@ tbl_produit_imp_cmr <- creer_table_top10(
 
 Les premières populations du Cameroun sont vraisemblablement les Bankas, habitants aujourd'hui au Sud et à l'Est du pays tandis que le territoire couvrant le Sud-Ouest de l’actuel Cameroun est considéré comme le berceau des peuples Bantous. Lorsque les portugais découvrent l’estuaire du Wouri, l'abondance de crevette les poussent à nommer le fleuve Río dos Camarões, donnant son nom moderne au Cameroun. Après de nombreuses années d'échanges commerciaux, dont la traite négrière, avec principalement les peuples doualas du Sud, la région passe sous contrôle allemand à partir de 1886. Le territoire n'est cependant réellement contrôlé par la force coloniale qu'après 1900 et les défaites consécutives des lamidats peuls de l’Adamaoua et du Sultan Rabah du Bornou. Après la Première Guerre Mondiale, le Cameroun est partagé entre l'Angleterre et la France à partir de 1916, fracture encore aujourd'hui marqué dans l’État moderne camerounais. L'Union des Populations du Cameroun (UPC), fondée en 1948 et dirigée par Ruben Um Nyobé, entame dès 1955 une lutte armée pour la réunification et l'indépendance du Cameroun. Celui-ci est cependant assassiné le 13 septembre 1958 par les forces coloniales, qui poussent ensuite pour l'investissement des pleins pouvoirs pour leur soutien Ahmadou Ahidjo le 30 octobre 1959. Ahdijo devient alors le premier président du Cameroun lors de son indépendance le 1er janvier 1960, suivi en 1961 par la réunification avec la zone anglaise, à l'exception de sa partie Nord qui choisit le Nigéria. Paul Biya prend la tête du pays le 6 novembre 1982 après la démission de Ahmadou Ahidjo et met en place les premières élections multipartites en mars 1992. A ce jour, il dirige toujours le pays. 
 
-Le Cameroun compte 240 ethnies réparties en trois grands groupes : les Bantous, les Semi-Bantous et les Soudanais, ce qui correspond à 240 langues nationales. Le territoire est divisé en 10 régions désignées par leur location géographique, sa capitale politique est Yaoundé et sa capitale économique Douala, située sur le littoral du pays. Le Cameroun est un état laïc où les deux religions principales sont le Christianisme et l’Islam. Le français et l'anglais sont les deux langues principales, se divisant à hauteur de 70% et 30% de la population respectivement. 
+Le Cameroun compte 240 ethnies réparties en trois grands groupes : les Bantous, les Semi-Bantous et les Soudanais, ce qui correspond à 240 langues nationales. Le territoire est divisé en 10 régions désignées par leur location géographique, sa capitale politique est Yaoundé et sa capitale économique Douala, située sur le littoral du pays. Le Cameroun est un état laïc où les deux religions principales sont le Christianisme et l’Islam. Le français et l'anglais sont les deux langues principales, se divisant à hauteur de 70% et 30% de la population respectivement.
+
+
 
 ::::: panel-tabset
 ### 📋 Profil Général
