@@ -449,14 +449,14 @@ La région d'Afrique Centrale est à la fois un berceau historique, un centre é
 
 La Communauté Économique et Monétaire de l'Afrique Centrale (CEMAC) est fondée en 1994 et regroupe 6 pays d'Afrique Centrale autour d'une volonté de coopération économique. La Communauté est fondée autour de 5 piliers (solidarité, collégialité, égalité, transparence et justice) et l'héritière de Union Douanière Equatoriale (UDC) devenue l'Union Douanière et Economique de l'Afrique Centrale (UDEAC) en 1964 puis CEMAC en 1994.
 
-Crée en 1959, l'UDE regroupe originellement la RCA, le Congo, le Gabon et le Tchad au sein d'une union douanière ayant pour but de mettre en place et de faciliter la coopération entre ses états membres. Le Cameroun rejoint l'UDE en 1961, avant que celle-ci ne devienne le 8 décembre 1964 l’Union Douanière et Economique de l’Afrique Centrale (UDEAC) après la signature du traité de Brazzaville. Ce texte acte alors la création d'une zone de libre-échange et réitère la volonté de coopération économique entre états membres avec la mise en place du premier tarif douanier en 1967. En 1972, les pays membres de l'UDEAC signent la «Convention Commune sur la libre circulation des personnes et le droit d'établissement» et ratifient l'adoption d'une monnaie commune : le Franc CFA, émis par la BEAC (Banque des Etats de l'Afrique Centrale). Le 1er janvier 1985, la Guinné Equatoriale devient le 6ème membre de l'UDEAC mais l'émergence de nouveaux défis économiques et sociaux durant la décennie suivant force l'Union à s'adapter. 
+Crée en 1959, l'UDE regroupe originellement la RCA, le Congo, le Gabon et le Tchad au sein d'une union douanière ayant pour but de mettre en place et de faciliter la coopération entre ses états membres. Le Cameroun rejoint l'UDE en 1961, avant que celle-ci ne devienne le 8 décembre 1964 l’Union Douanière et Economique de l’Afrique Centrale (UDEAC) après la signature du traité de Brazzaville. Ce texte acte alors la création d'une zone de libre-échange et réitère la volonté de coopération économique entre états membres avec la mise en place du premier tarif douanier en 1967. En 1972, les pays membres de l'UDEAC signent la «Convention Commune sur la libre circulation des personnes et le droit d'établissement» et ratifient l'adoption d'une monnaie commune : le Franc CFA, émis par la BEAC (Banque des États de l'Afrique Centrale). Le 1er janvier 1985, la Guinné Equatoriale devient le 6ème membre de l'UDEAC mais l'émergence de nouveaux défis économiques et sociaux durant la décennie suivant force l'Union à s'adapter. 
 
-Le 16 mars 1994, les dirigeants d'Etats se réunissent à N’Djamena au Tchad pour la signature du Traité instituant la Communauté Economique et Monétaire de l’Afrique Centrale (CEMAC). Cette nouvelle communauté, entrée en vigueur en 1996, repose sur deux piliers :
+Le 16 mars 1994, les dirigeants d'États se réunissent à N’Djamena au Tchad pour la signature du Traité instituant la Communauté Economique et Monétaire de l’Afrique Centrale (CEMAC). Cette nouvelle communauté, entrée en vigueur en 1996, repose sur deux piliers :
 
 - L’Union Économique de l’Afrique Centrale (UEAC), en charge de la coopération économique entre pays signataires. 
 - L’Union Monétaire de l’Afrique Centrale (UMAC), qui suppervise la convergence monétaire des États membres, tous usant du Franc CFA. 
 
-La présidence de la CEMAC est assurée de façon rotative par un des dirigeants d'Etat membre dirigeant la Conférence des Chefs d’État (Denis Sassou-Nguesso depuis 2025). La Comission de la CEMAC, organe de pilotage administratif de la communauté chargée de superviser la mise en place du Programme Economique Régional (PER) est dirigée par un président, élu pour un mandat de 5 ans (actuellement Baltasar Engonga Edjo'o depuis 2023). 
+La présidence de la CEMAC est assurée de façon rotative par un des dirigeants d'État membre dirigeant la Conférence des Chefs d’État (Denis Sassou-Nguesso depuis 2025). La Comission de la CEMAC, organe de pilotage administratif de la communauté chargée de superviser la mise en place du Programme Economique Régional (PER) est dirigée par un président, élu pour un mandat de 5 ans (actuellement Baltasar Engonga Edjo'o depuis 2023). 
 
 
 ```{r}
@@ -490,7 +490,7 @@ Fiche_CEMAC |>
 
 ## La BEAC
 
-La Banque des Etats d'Afrique Centrale (BEAC) est crée le 22 novembre 1972 pour remplacer la Banque Centrale des Etats de l’Afrique Equatoriale et du Cameroun (BCEAEC). Son objectif est de coordoner les politiques monétaires des pays de la zone CEMAC et d'en émettre la monnaie fiduciaire, le Franc CFA. Parmis ses missions l'institution est également en charge des réserves de changes des Etats membres, de la conduite de la politique de change de la CEMAC et de promouvoir le bon fonctionnement des systèmes de paiement et de règlement ainsi que la stabilité financière. La Banque est gouvernée par un conseil de 6 membres représentant chaque pays de la Communauté nommés par la Conférence des Chefs d’Etats de la CEMAC pour un mandat non renouvelable : le Gouverneur, le Vice-Gouverneur, le Secrétaire Général et trois Directeurs Généraux. Le conseil d'administration de la Banque est quant à lui constitué de 14 membres : 2 par pays membres et 2 pour la France. 
+La Banque des États d'Afrique Centrale (BEAC) est crée le 22 novembre 1972 pour remplacer la Banque Centrale des États de l’Afrique Equatoriale et du Cameroun (BCEAEC). Son objectif est de coordoner les politiques monétaires des pays de la zone CEMAC et d'en émettre la monnaie fiduciaire, le Franc CFA. Parmis ses missions l'institution est également en charge des réserves de changes des États membres, de la conduite de la politique de change de la CEMAC et de promouvoir le bon fonctionnement des systèmes de paiement et de règlement ainsi que la stabilité financière. La Banque est gouvernée par un conseil de 6 membres représentant chaque pays de la Communauté nommés par la Conférence des Chefs d’États de la CEMAC pour un mandat non renouvelable : le Gouverneur, le Vice-Gouverneur, le Secrétaire Général et trois Directeurs Généraux. Le conseil d'administration de la Banque est quant à lui constitué de 14 membres : 2 par pays membres et 2 pour la France. 
 
 La BEAC détient aujourd'hui un capital de 353 milliards de francs CFA et poursuit sa mission essentielle de maintient de la stabilité monétaire de la CEMAC. La politique de change de l'insitution est donc articulée autour de 4 piliers :
 
@@ -689,9 +689,9 @@ tbl_produit_imp_cmr <- creer_table_top10(
 ::::: panel-tabset
 ### Historique
 
-Les premières populations du Cameroun sont vraisemblablement les Bankas, habitants aujourd'hui au Sud et à l'Est du pays tandis que le territoire couvrant le Sud-Ouest de l’actuel Cameroun est considéré comme le berceau des peuples Bantous. Lorsque les portugais découvrent l’estuaire du Wouri, l'abondance de crevette les poussent à nommer le fleuve Río dos Camarões, donnant son nom moderne au Cameroun. Après de nombreuses années d'échanges commerciaux, dont la traite négrière, avec principalement les peuples doualas du Sud, la région passe sous contrôle allemand à partir de 1886. Le territoire n'est cependant réellement contrôlé par la force coloniale qu'après 1900 et les défaites consécutives des lamidats peuls de l’Adamaoua et du Sultan Rabah du Bornou. 
+Les premières populations du Cameroun sont vraisemblablement les **Bankas**, habitants aujourd'hui au Sud et à l'Est du pays tandis que le territoire couvrant le Sud-Ouest de l’actuel Cameroun est considéré comme le berceau des peuples **Bantous.** Lorsque les portugais découvrent **l’estuaire du Wouri**, l'abondance de crevette les poussent à nommer le fleuve **Río dos Camarões**, donnant son nom moderne au Cameroun. Après de nombreuses années d'échanges commerciaux, dont la traite négrière, avec principalement les peuples doualas du Sud, la région passe sous **contrôle allemand** à partir de **1886.** Le territoire n'est cependant réellement contrôlé par la force coloniale qu'après **1900** et les défaites consécutives des **lamidats peuls de l’Adamaoua **et du **Sultan Rabah du Bornou**. 
 
-Après la Première Guerre Mondiale, le Cameroun est partagé entre l'Angleterre et la France à partir de 1916, fracture encore aujourd'hui marqué dans l’État moderne camerounais. L'Union des Populations du Cameroun (UPC), fondée en 1948 et dirigée par Ruben Um Nyobé, entame dès 1955 une lutte armée pour la réunification et l'indépendance du Cameroun. Celui-ci est cependant assassiné le 13 septembre 1958 par les forces coloniales, qui poussent ensuite pour l'investiture des pleins pouvoirs pour leur soutien Ahmadou Ahidjo le 30 octobre 1959. Ahdijo devient alors le premier président du Cameroun lors de son indépendance le 1er janvier 1960, suivi en 1961 par la réunification avec la zone anglaise, à l'exception de sa partie Nord qui choisit le Nigéria. Paul Biya prend la tête du pays le 6 novembre 1982 après la démission de Ahmadou Ahidjo et met en place les premières élections multipartites en mars 1992. Réélu le 12 octobre 2025 sous la bannière du  Rassemblement Démocratique du Peuple Camerounais (RDPC), il dirige encore à ce jour le pays. 
+Après la Première Guerre Mondiale, le Cameroun est partagé **entre l'Angleterre et la France à partir de 1916**, fracture encore aujourd'hui marqué dans l’État moderne camerounais. **L'Union des Populations du Cameroun (UPC)**, fondée en 1948 et dirigée par **Ruben Um Nyobé**, entame dès 1955 une lutte armée pour la réunification et l'indépendance du Cameroun. Celui-ci est cependant **assassiné** le 13 septembre 1958 par les forces coloniales, qui poussent ensuite pour l'investiture des pleins pouvoirs pour leur soutien **Ahmadou Ahidjo** le 30 octobre 1959. Ahdijo devient alors le premier président du Cameroun lors de son indépendance le **1er janvier 1960**, suivi en 1961 par la réunification avec la zone anglaise, à l'exception de sa partie Nord qui choisit le Nigéria. **Paul Biya** prend la tête du pays le 6 novembre 1982 après la démission de Ahmadou Ahidjo et met en place les premières élections multipartites en mars 1992. Réélu le 12 octobre 2025 sous la bannière du **Rassemblement Démocratique du Peuple Camerounais (RDPC)**, il dirige encore à ce jour le pays. 
 
 
 
@@ -702,7 +702,7 @@ Après la Première Guerre Mondiale, le Cameroun est partagé entre l'Angleterre
 
 ### Profil Général
 
-Le Cameroun compte 240 ethnies réparties en trois grands groupes : les Bantous, les Semi-Bantous et les Soudanais, ce qui correspond à 240 langues nationales. Le territoire est divisé en 10 régions désignées par leur location géographique, sa capitale politique est Yaoundé et sa capitale économique Douala, située sur le littoral du pays. Le Cameroun est un état laïc où les deux religions principales sont le Christianisme et l’Islam. Le français et l'anglais sont les deux langues principales, se divisant à hauteur de 70% et 30% de la population respectivement.
+Le Cameroun compte **240 ethnies** réparties en trois grands groupes : les **Bantous**, les **Semi-Bantous** et les **Soudanais**, ce qui correspond à **240 langues nationales**. Le territoire est divisé en **10 régions** désignées par leur location géographique, sa capitale politique est **Yaoundé** et sa capitale économique **Douala**, située sur le littoral du pays. Le Cameroun est un état laïc où les deux religions principales sont **le Christianisme et l’Islam**. Le **français** et l'**anglais** sont les deux langues principales, se divisant à hauteur de 70% et 30% de la population respectivement.
 
 
 ```{r}
@@ -713,14 +713,14 @@ Fiche_Cameroun
 
 ### Profil Economique
 
-Le Cameroun est l'économie la plus importante et la plus diversifiée de la zone CEMAC (44% de son PIB total). Le secteur primaire représente 17% du PIB total, avec 10% pour le secteur agricole alors même que 40% de la population travaille dans ce secteur. Plus généralement, l'économie camerounaise reste dépendante à des productions manufacturières (cacao, coton, sucre, huile, ...) qui manquent de compétitivité et dont les cours sont fortement influencés par la conjoncture mondiale. Le secteur secondaire représente 25% du PIB avec une baisse marquée de l'importance du pétrole, qui ne représente plus que 3,6% du PIB en 2024, et une augmentation de la part du GNL (de 9,7Md de pieds cubes en 2015 à 76Md en 2024). Les services comptent pour 54% du PIB via les télécommunications, le transport, le commerce, l'hôtellerie et la restauration. Le pays est également soutenu par un secteur bancaire et des services financiers solides.  
+Le Cameroun est **l'économie la plus importante et la plus diversifiée de la zone CEMAC** (44% de son PIB total). Le secteur primaire représente 17% du PIB total, avec **10% pour le secteur agricole** alors même que 40% de la population travaille dans ce secteur. Plus généralement, l'économie camerounaise reste **dépendante à des productions manufacturières** (cacao, coton, sucre, huile, ...) qui manquent de compétitivité et dont les cours sont fortement influencés par la conjoncture mondiale. Le secteur secondaire représente **25% du PIB** avec une baisse marquée de l'importance du pétrole, qui ne représente plus que **3,6% du PIB en 2024**, et une augmentation de la part du GNL (de 9,7Md de pieds cubes en 2015 à 76Md en 2024). **Les services comptent pour 54% du PIB** via les télécommunications, le transport, le commerce, l'hôtellerie et la restauration. Le pays est également soutenu par un **secteur bancaire** et des **services financiers** solides.  
 
-La croissance du pays (3.2% en 2025) se caractérise par deux dynamiques parallèles : la baisse de la part du secteur pétrolier, du au vieillissement des raffineries et au contexte de baisse des prix du baril, et la prise d'importance du secteur non-pétrolier. Cette seconde tendance est soutenue par la Stratégie Nationale du Développement (SND-30) qui pose un objectif de croissance non-pétrolier de 8.1% en 2030, tout en voulant réduire les importations et renforcer les industries locales.
+La croissance du pays (**3.2%** en 2025) se caractérise par deux dynamiques parallèles : la **baisse de la part du secteur pétrolier**, du au vieillissement des raffineries et au contexte de baisse des prix du baril, et la prise d'importance du secteur non-pétrolier. Cette seconde tendance est soutenue par la **Stratégie Nationale du Développement (SND-30)** qui pose un objectif de croissance non-pétrolier de 8.1% en 2030, tout en voulant réduire les importations et renforcer les industries locales.
 
 :::: {.columns}
 
 ::: {.column width="75%"}
-La dette camerounaise est jugée stable par la majorité des acteurs financiers et la mise en place d'un plan FMI renouvelé en 2021 pour une durée de 4 ans et un montant de plus de 800M USD va en ce sens. De nombreuses mesures ont été adoptées dans cette direction : optimisation des dépenses courantes, élargissement de l'assiette fiscale, réduction des exonérations, créations de nouvelles taxes et fin des subventions maintenant artificiellement bas le prix du carburant. Différents points de tensions subsistent cependant. Malgré une dette relativement faible  à 39.3% du PIB en 2026, le service de la dette reste extrêmement coûteux, captant 35% des recettes budgétaires (soit 8.3% du PIB) en 2026. De plus, la dette camerounaise reste très exposé, étant composé à 63% de dette extérieure (dont 56,4% en bailleurs multilatéraux). Enfin, l'inflation reste contrôlée grâce à une politique monétaire stricte, une appréciation du taux de change et le ralentissement des prix alimentaires, bien qu'un sursaut soit attendu en 2026 avec une hausse des dépenses gouvernementales anticipée.  
+La dette camerounaise est jugée **stable** par la majorité des acteurs financiers et la mise en place d'un **plan FMI** renouvelé en 2021 pour une durée de 4 ans et un montant de plus de 800M USD va en ce sens. De nombreuses mesures ont été adoptées dans cette direction : optimisation des dépenses courantes, élargissement de l'assiette fiscale, réduction des exonérations, créations de nouvelles taxes et fin des subventions maintenant artificiellement bas le prix du carburant. Différents points de tensions subsistent cependant. Malgré une **dette relativement faible  à 39.3% du PIB en 2026**, le service de la dette reste extrêmement coûteux, captant **35% des recettes budgétaires** (soit 8.3% du PIB) en 2026. De plus, la dette camerounaise reste très exposé, étant composé à** 63% de dette extérieure** (dont 56,4% en bailleurs multilatéraux). Enfin, **l'inflation reste contrôlée** grâce à une politique monétaire stricte, une appréciation du taux de change et le ralentissement des prix alimentaires, bien qu'un sursaut soit attendu en 2026 avec une hausse des dépenses gouvernementales anticipée.  
 
 :::
 
@@ -740,7 +740,7 @@ La dette camerounaise est jugée stable par la majorité des acteurs financiers 
 
 ::::
 
-La Balance Courante camerounaise est structurellement négative, ses exportations étant composées à 85% de produits non-transformés, avec une dépendance au secteur pétrolier. La baisse des prix du barils, la hausse de la demande pour les biens et services importés et la dégradation des termes de l'échanges de près de 16,3% attendue par le FMI en 2026 viennent renforcer ce constat. Ce déficit reste grandement financé par des IDE entrants, principalement lié à l'extraction de ressources et dont la Chine est aujourd'hui le premier contributeur, notamment dans les mines de fer, l'agriculture et via des prêts au gouvernement. 
+La Balance Courante camerounaise est **structurellement déficitaire**, ses exportations étant composées à 85% de produits non-transformés, avec une **dépendance au secteur pétrolier**. La baisse des prix du barils, la hausse de la demande pour les biens et services importés et la dégradation des termes de l'échanges de près de 16,3% attendue par le FMI en 2026 viennent renforcer ce constat. Ce déficit reste grandement financé par des **IDE entrants**, principalement lié à l'extraction de ressources et dont la **Chine** est aujourd'hui le premier contributeur, notamment dans les mines de fer, l'agriculture et via des prêts au gouvernement. 
 
 ::: {.callout-note appearance="simple" icon="false"}
 #### Projets d'envergure au Cameroun
@@ -858,6 +858,17 @@ tbl_produit_imp_CAF <- creer_table_top10(
 ```
 
 ::::: panel-tabset
+
+### Historique
+
+L'Histoire pré-coloniale de la République Centrafricaine est vraisemblablement marquée par de une culture riche, tournée vers **le commerce avec le Haut-Nil**, profitant de conditions géographiques favorables au développement. Cependant, l'absence de grand État ou royaume facilite l'établissement de la **Traite Atlantique** par les puissances coloniales à partir du **18ème siècle**. Jusqu'en 1900, la région située autour de la **rivière Oubangui** est sujette à des pressions **du Royaume du Kanem, devenu Bornou** par la suite, de la région du Lac Tchad. La fin du 19ème siècle est marquée par l'ascension puis la chute du **sultanat esclavagiste de Rabah**, défait par la France en 1900 et dont le territoire s'étend du Bahr el-Ghazal au Nord de la RCA actuelle. La **tutelle française** remonte en réalité à **1889** et la création de la ville de **Bangui** qui permet de contrôler le passage de l'Oubangui, **porte d'entre vers le Congo**. Le territoire devient officiellement une colonie en **1905** sous le nom d'**Oubangui-Chari** et intègre **l'Afrique-Équatoriale française (A-ÉF)** lors de sa création en 1910. Durant la première moitié du siècle, la France impose une tutelle sévère imposant aux populations le portage, le travail dans les sociétés concessionnaires françaises et fournissant des soldats lors des deux Guerres Mondiales. Cette période est également marquée par l'importante **révolte des Gbayas** venant des régions fluviales et matée par la violence en 1934. La lutte pour l'indépendance se formalise à partir de **1950** autour du **Mouvement pour l'évolution sociale de l'Afrique noire (MESAN)** fondé par le premier prêtre catholique de l'Oubangui-Chari, **Barthélemy Boganda**, avec pour but de fonder une nation oubanguienne. L'indépendance et la création de la République Centrafricaine est proclamée le **1er décembre 1958**, après référendum. Le premier président du pays est **David Dacko**, nommé le 13 août 1960, nouveau chef du MESAN après la mort l'année auparavant de son leader historique dans un accident d'avion dont les circonstances restent mal élucidées.
+
+Le mandat de Dacko est marqué par la répression du principal parti d'opposition, le **Mouvement pour l'évolution de l'Afrique centrale (MEDAC)**, dont le leader **Abel Goumba**, est contraint à l'exil en 1962 après avoir été arrêté et jugé par le pouvoir. Dacko est finalement renversé le **1 janvier 1966** lors d'un coup d’État qui voit le chef d'État-major **Jean-Bédel Bokassa** arriver au pouvoir et instaurer une **dictature oppressive** après avoir suspendu la constitution et dissous le parlement. Bokassa se fait couronner **empereur de l'Empire centrafricain en 1976** mais est renversé en 1979 suite à l'opération *Barracuda* menée par la France, pourtant ancien soutient du militaire. David Dacko retrouve alors la présidence, réinstaure la République et adopte une nouvelle constitution suite à un référendum. Malgré une victoire dans les urnes du MESAN devenu **UDC (Union Démocratique Centrafricaine)**, le mandat de Dacko est encore une fois de courte durée et il est renversé par le commandant en chef des forces armées centrafricaines **André Dieudonné Kolingba** qui se proclame président en **1981.** Face aux tensions économiques et sociales et à la pression de la France, Kolingba organise en 1993 des élections qu'il perd au profit d'**Ange-Félix Patassé**, ancien ministre de Bokassa. Un autre coup d'État a lieu en 2003 et l'ex-général **François Bozizé** s'empare du pouvoir avec l'aide du Tchad, menant à la suspension de la participation de la République centrafricaine au sein de l'Union africaine. L'opposition, réunie au sein de la **Séléka** (coalition) et dirigée par **Michel Djotodia**, finit par renverser Bozizé en **2013.** Djotodia se proclame alors président, suspend la Constitution, dissout l'Assemblée nationale, puis forme un nouveau gouvernement avant de devoir démissionner face aux **violences** que la victoire de la Séléka a engendré et l'**intervention coalisée de l'ONU et de la France** qui s'en est suivi. Une nouvelle constitution est finalement adoptée par référendum en **2016** et **Faustin-Archange Touadéra**, dernier Premier ministre de F. Bozizé, est élu président de la République avec plus de 62 % des voix au second tour du scrutin, et entre en fonctions le **30 mars 2016**, fonction qu'il occupe encore à ce jour.
+
+![Carte des régions de Centrafrique](.\Ressources\Carte_Centrafrique.jpg){#fig-cameroun width=50% fig-align="center"}
+
+<p style="text-align: center; font-size: 0.85em; color: gray;">Source : Cartograf.fr</p>
+
 ###  Profil Général
 
 ```{r}
@@ -866,7 +877,10 @@ tbl_produit_imp_CAF <- creer_table_top10(
 Fiche_CF
 ```
 
-### Mesures Economique
+### Profil Economique
+:::: panel-tabset
+
+#### Mesures Générales
 
 ```{r}
 #| echo: false
@@ -875,8 +889,7 @@ reactable_BEAC_wide("RCA")
 ```
 
 
-
-###  Partenaires Commerciaux
+####  Partenaires Commerciaux
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -890,7 +903,7 @@ tbl_partenaires_imp_CAF
 ```
 :::
 
-###  Produits Échangés
+####  Produits Échangés
 
 ::: {layout-ncol="2"}
 ```{r}
@@ -903,6 +916,7 @@ tbl_produit_exp_CAF
 tbl_produit_imp_CAF
 ```
 :::
+::::
 :::::
 
 ## République du Congo
