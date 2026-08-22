@@ -146,6 +146,7 @@ Code_douaniers_fr <- tribble(
 )
 ```
 
+
 ```{r}
 #| label: Recuperation donnees COMTRADE
 #| message: false
@@ -720,7 +721,7 @@ La croissance du pays (**3.2%** en 2025) se caractérise par deux dynamiques par
 :::: {.columns}
 
 ::: {.column width="75%"}
-La dette camerounaise est jugée **stable** par la majorité des acteurs financiers et la mise en place d'un **plan FMI** renouvelé en 2021 pour une durée de 4 ans et un montant de plus de 800M USD va en ce sens. De nombreuses mesures ont été adoptées dans cette direction : optimisation des dépenses courantes, élargissement de l'assiette fiscale, réduction des exonérations, créations de nouvelles taxes et fin des subventions maintenant artificiellement bas le prix du carburant. Différents points de tensions subsistent cependant. Malgré une **dette relativement faible  à 39.3% du PIB en 2026**, le service de la dette reste extrêmement coûteux, captant **35% des recettes budgétaires** (soit 8.3% du PIB) en 2026. De plus, la dette camerounaise reste très exposé, étant composé à** 63% de dette extérieure** (dont 56,4% en bailleurs multilatéraux). Enfin, **l'inflation reste contrôlée** grâce à une politique monétaire stricte, une appréciation du taux de change et le ralentissement des prix alimentaires, bien qu'un sursaut soit attendu en 2026 avec une hausse des dépenses gouvernementales anticipée.  
+La dette camerounaise est jugée **stable** par la majorité des acteurs financiers et la mise en place d'un **plan FMI** renouvelé en 2021 pour une durée de 4 ans et un montant de plus de 800M USD va en ce sens. De nombreuses mesures ont été adoptées dans cette direction : optimisation des dépenses courantes, élargissement de l'assiette fiscale, réduction des exonérations, créations de nouvelles taxes et fin des subventions maintenant artificiellement bas le prix du carburant. Différents points de tensions subsistent cependant. Malgré une **dette relativement faible  à 39.3% du PIB en 2026**, le service de la dette reste extrêmement coûteux, captant **35% des recettes budgétaires** (soit 8.3% du PIB) en 2026. De plus, la dette camerounaise reste très exposé, étant composé à **63% de dette extérieure** (dont 56,4% en bailleurs multilatéraux). Enfin, **l'inflation reste contrôlée** grâce à une politique monétaire stricte, une appréciation du taux de change et le ralentissement des prix alimentaires, bien qu'un sursaut soit attendu en 2026 avec une hausse des dépenses gouvernementales anticipée.  
 
 :::
 
@@ -871,6 +872,10 @@ Le mandat de Dacko est marqué par la répression du principal parti d'oppositio
 
 ###  Profil Général
 
+La République Centrafricaine compte de nombreuses ethnies avec 2 groupes majeurs : les *gens de la savane*, majoritairement constitués des groupes **Gbayas-Mandjas** et **Bandas**, et les *gens du fleuve*, de langue **sango.** A ce portrait s'ajoute les **Zande**, agriculteurs semi-itinérants du Nord-Est. Le territoire se divise en **7 régions et 16 préfectures**, sa capitale est Bangui et sa deuxième ville est Berbérati. Les religions principales sont l'**Animisme**, qui compte pour 60% de la population, le **Christianisme** et l’**Islam.** Le français et le sango sont les deux langues officielles et près de **60 langues sont recensées**, avec parmi elles les langues gbaya-manza, banda ou sara-mbay.
+
+
+
 ```{r}
 #| echo: false
 # Affichage de la fiche pays
@@ -878,6 +883,17 @@ Fiche_CF
 ```
 
 ### Profil Economique
+
+L'économie centrafricaine par une **faible diversification** et une dépendance à ses secteurs primaire et secondaire qui représentent respectivement **40% et 20% du PIB**. Le pays dispose d'**abondantes ressources minières** (or et diamant) et en bois, mais sa condition de pays **enclavé** et son absence de réelle ressource énergétique le rend **dépendant à ses importations en pétrole et en produits alimentaires.**
+
+En 2025, la croissance du pays repart à la hausse après plusieurs années de stagnation, atteignant les **3.3%** sur l'année. Cette relance s'explique par une **amélioration du contexte sécuritaire**, la **résilience du secteur sylvicole** et un meilleur accès aux ressources pétrolières (baisse des prix et dons de carburant par la Russie alliée). L'achèvement du projet d'installation d'une **couverture 4g** dans le pays et du projet "Corridor 13" reliant Pointe-Noire à N'Djamena en passant par Bangui contribue également à cette relance. La **demande est aussi stimulée** avec une hausse de la **consommation des ménages**, de 12.6% en 2024 à 16.8% en 2025, et de l'**investissement**, de 10.8% en 2024 à 15.8% en 2025. Enfin, la **levée de nombreuses sanctions internationales** liées à la gestion des mines et leur traçabilité allège la pression sur l'économie. 
+
+
+La dette centrafricaine est jugée **stable**, avec le déficit budgétaire et le déficit courant tout deux en baisse en 2025, grâce notamment à une **meilleure mobilisation des ressources intérieures** et des recettes minières améliorées. La dette totale de **64% du PIB en 2026** reste dans les normes de la CEMAC malgré un service de la dette important qui capte **33% des dépenses publiques** sur la période. La dette centrafricaine reste fortement exposée en étant à **53% externe** (57% en bailleurs multilatéraux) et le déficit est financé en grande partie par des subventions venant d'institutions internationales et des prêts bilatéraux (majoritairement la France et la Chine). La **Politique budgétaire** votée pour 2025-26 appuie une volonté de rigueur en visant une stabilisation des dépenses publiques à **600M USD**, une baisse des exonérations et de meilleurs moyens pour l'administration fiscale dans un pays ou le taux de **prélèvements obligatoires n'est que de 10%**. L'**inflation locale reste maîtrisée**, à **1.5%** d'augmentation en 2025, aidée par différentes mesures gouvernementales et une meilleure offre agricole et énergétique. 
+
+
+Malgré cette bonne dynamique, la RCA a toujours une **pression à l'endettement** si le pays veut atteindre les objectifs du **Plan National de Développement 2024-2028 (PND-28)** et les **12,8Md USD** nécessaires à sa réalisation. Au niveau national, la consommation publique **stagne** et la consommation privée reste plafonnée par la pauvreté du pays. Par **manque d'épargne domestique**, le pays doit s'endetter sur les marchés internationaux où il se rend vulnérable aux fluctuations des **taux d'intérêts** et **taux de change**. Les nombreuses **déficiences** du pays, en terme de TIC, d'infrastructures de transport et d'énergie, l'**insécurité** toujours menaçante et le **manque de réformes structurelles** dans la gestion des finances publiques renforcent ce tableau de vulnérabilité. Les prévisions restent cependant positives, attendant une hausse des exportations et de l'activité forestière bénéfiques à l'économie dans les mois à venir.  
+
 :::: panel-tabset
 
 #### Mesures Générales
